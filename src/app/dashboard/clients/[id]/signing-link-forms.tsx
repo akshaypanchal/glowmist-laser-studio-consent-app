@@ -14,8 +14,12 @@ function LinkResult({ state }: { state: LinkState }) {
   return (
     <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 p-4 text-sm">
       <p className="mb-2 font-medium text-emerald-900">
-        {state.reference}: signing link ready. It is shown only once, so copy it now.
+        {state.reference}: signing link ready. It is shown only once, so copy it now if you need it.
       </p>
+      {state.emailed === true && <p className="mb-2 text-emerald-900">The link was emailed to the client.</p>}
+      {state.emailed === false && (
+        <p className="mb-2 text-amber-800">The email could not be sent. Copy the link and send it to the client yourself.</p>
+      )}
       <div className="flex flex-wrap items-center gap-2">
         <code className="min-w-0 flex-1 rounded bg-white px-2 py-1 break-all" data-testid="signing-url">
           {state.signingUrl}
@@ -58,6 +62,10 @@ export function CreateConsentForm({ clientId, templates }: { clientId: string; t
           {pending ? "Creating…" : "Create signing link"}
         </Button>
       </div>
+      <label className="mt-3 flex items-center gap-2 text-sm text-stone-700">
+        <input type="checkbox" name="sendEmail" defaultChecked className="h-4 w-4 accent-brand-600" />
+        Email the link to the client
+      </label>
       <LinkResult state={state} />
     </form>
   );
@@ -68,6 +76,7 @@ export function ReissueLinkForm({ documentId }: { documentId: string }) {
   return (
     <form action={action}>
       <input type="hidden" name="documentId" value={documentId} />
+      <input type="hidden" name="sendEmail" value="on" />
       <Button type="submit" variant="secondary" disabled={pending}>
         {pending ? "Creating…" : "New link"}
       </Button>

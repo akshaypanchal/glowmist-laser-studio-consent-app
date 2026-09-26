@@ -1,4 +1,4 @@
-// Server actions for clients: add a client, create a consent form and signing link, issue a new link.
+// Server actions for clients: add a client, create a consent form and signing link (optionally emailing it), issue a new link.
 
 "use server";
 
@@ -8,6 +8,7 @@ import { z } from "zod";
 import { requireUser } from "@/server/auth/session";
 import { clientInputSchema, createClient, type ClientInput } from "@/server/clients/service";
 import { createConsentDocument, NotFoundError, reissueSigningLink } from "@/server/documents/service";
+import { sendSigningInvitation } from "@/server/email/delivery";
 import { requestContext } from "@/server/http";
 
 export type FormState = { error?: string; fieldErrors?: Record<string, string[] | undefined> };
@@ -24,7 +25,7 @@ export async function createClientAction(_: FormState, formData: FormData): Prom
   redirect(`/dashboard/clients/${client.id}`);
 }
 
-export type LinkState = { error?: string; signingUrl?: string; reference?: string };
+export type LinkState = { error?: string; signingUrl?: string; reference?: string; emailed?: boolean | null; email?: string };
 
 const createDocumentSchema = z.object({ clientId: z.string().min(1), templateId: z.string().min(1) });
 
@@ -37,8 +38,9 @@ export async function createConsentAction(_: LinkState, formData: FormData): Pro
       { userId: user.id, organizationId: user.organizationId, context: await requestContext() },
       parsed.data,
     );
+    const emailed = formData.get("sendEmail") === "on" ? await sendSigningInvitation(result.document.id, result.signingUrl) : null;
     revalidatePath(`/dashboard/clients/${parsed.data.clientId}`);
-    return { signingUrl: result.signingUrl, reference: result.document.reference };
+    return { signingUrl: result.signingUrl, reference: result.document.reference, emailed, email: result.client.email };
   } catch (error) {
     if (error instanceof NotFoundError) return { error: error.message };
     throw error;
@@ -53,7 +55,8 @@ export async function reissueLinkAction(_: LinkState, formData: FormData): Promi
       { userId: user.id, organizationId: user.organizationId, context: await requestContext() },
       documentId,
     );
-    return { signingUrl: result.signingUrl, reference: result.document.reference };
+    const emailed = formData.get("sendEmail") === "on" ? await sendSigningInvitation(result.document.id, result.signingUrl) : null;
+    return { signingUrl: result.signingUrl, reference: result.document.reference, emailed };
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Could not create a new link." };
   }
