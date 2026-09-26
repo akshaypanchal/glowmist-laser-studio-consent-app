@@ -63,6 +63,7 @@ When a form is signed, the client and the studio each get the signed PDF. If Res
 | `npm run db:migrate` | Apply migrations to `TURSO_DATABASE_URL` |
 | `npm run db:seed` | Create the studio, owner login and consent template |
 | `npm test` | Unit tests (Vitest) |
+| `npm run build && npm run test:e2e` | Browser tests (Playwright) against a fresh `e2e.db`; they seed their own owner login |
 | `npm run lint`, `npm run typecheck` | Static checks |
 
 ## Layout
@@ -87,3 +88,10 @@ src/
 - Every audit event stores the hash of the previous one, so editing or deleting history is detectable.
 - Document status only moves along allowed transitions (for example `SENT → VIEWED → IN_PROGRESS → SIGNED`).
 - Secrets are read only on the server; nothing uses the `NEXT_PUBLIC_` prefix.
+- Signing links and sign-in are rate limited (counters live in the `rate_limits` table, so they work across Vercel's serverless instances). Limits are in `src/server/rate-limit.ts`.
+- Every page gets a Content Security Policy with a fresh nonce (`src/proxy.ts`), so injected scripts can't run. Pages can't be framed, and the `no-referrer` policy keeps signing tokens from leaking to other sites.
+- Pages and API responses with client data are sent with `Cache-Control: no-store`.
+
+## Data retention
+
+Nothing is deleted automatically. Signed forms, signatures, PDFs and the audit trail are kept until someone removes them, because consent records are usually required to be kept for years. Check the retention period that applies to the studio (for example under Ontario's health privacy rules) and plan a yearly clean-up if records must eventually be destroyed. Voiding a document keeps its history; it only stops it being used.
