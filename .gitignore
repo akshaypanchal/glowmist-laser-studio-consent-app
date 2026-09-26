@@ -1,0 +1,15 @@
+node_modules/
+.next/
+out/
+.env
+.env*.local
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+.vercel
+next-env.d.ts
+*.tsbuildinfo
+playwright-report/
+test-results/
+.data/
