@@ -1,3 +1,5 @@
+// The staff sign-in form (email and password).
+
 "use client";
 
 import { useActionState } from "react";

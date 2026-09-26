@@ -1,3 +1,5 @@
+// Server action behind the staff sign-in form.
+
 "use server";
 
 import { redirect } from "next/navigation";

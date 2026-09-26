@@ -1,3 +1,5 @@
+// A client's page: their details, their consent forms and a button to create a new one.
+
 import { notFound } from "next/navigation";
 import { StatusBadge } from "@/components/documents/status-badge";
 import { Card, CardTitle } from "@/components/ui/card";

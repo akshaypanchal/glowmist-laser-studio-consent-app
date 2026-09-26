@@ -1,3 +1,5 @@
+// Staff sign-in page at `/login`.
+
 import { redirect } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { getCurrentUser } from "@/server/auth/session";

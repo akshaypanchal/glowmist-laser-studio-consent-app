@@ -1,3 +1,5 @@
+// Lists a studio's active consent templates.
+
 import "server-only";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/server/db";

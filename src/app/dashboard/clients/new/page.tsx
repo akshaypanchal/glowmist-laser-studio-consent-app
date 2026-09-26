@@ -1,3 +1,5 @@
+// Add-a-client page.
+
 import { Card, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/server/auth/session";
 import { ClientForm } from "./client-form";

@@ -1,3 +1,5 @@
+// Staff login sessions: sets the session cookie, looks up the signed-in user, and requireUser() protects every dashboard page and action.
+
 import "server-only";
 import { and, eq, gt } from "drizzle-orm";
 import { cookies } from "next/headers";

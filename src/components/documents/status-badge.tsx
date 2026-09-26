@@ -1,3 +1,5 @@
+// Coloured badge for a document's status.
+
 import { Badge } from "@/components/ui/badge";
 import type { DocumentStatus } from "@/server/db/schema";
 

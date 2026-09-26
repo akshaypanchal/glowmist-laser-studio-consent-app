@@ -1,3 +1,5 @@
+// Server actions for clients: add a client, create a consent form and signing link, issue a new link.
+
 "use server";
 
 import { revalidatePath } from "next/cache";

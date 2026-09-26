@@ -1,3 +1,5 @@
+// Reads the client's IP address and browser (user agent) from the request, for the audit trail.
+
 import "server-only";
 import { headers } from "next/headers";
 import type { RequestContext } from "@/server/audit/service";

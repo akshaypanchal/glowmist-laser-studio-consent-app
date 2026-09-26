@@ -1,3 +1,5 @@
+// Buttons that create a signing link or a replacement link and show it once with a Copy button.
+
 "use client";
 
 import { useActionState, useState } from "react";

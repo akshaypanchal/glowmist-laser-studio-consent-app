@@ -1,3 +1,5 @@
+// Adds and looks up clients. Every query is limited to the signed-in user's studio.
+
 import "server-only";
 import { and, asc, eq } from "drizzle-orm";
 import { z } from "zod";

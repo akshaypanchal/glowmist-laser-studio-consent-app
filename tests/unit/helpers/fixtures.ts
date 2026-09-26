@@ -1,3 +1,5 @@
+// Test helper: creates a studio with an owner, the GlowMist template and a client.
+
 import { GLOWMIST_CONSENT_V1 } from "@/lib/consent-template";
 import { hashPassword } from "@/lib/password";
 import { db } from "@/server/db";

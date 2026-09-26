@@ -1,3 +1,5 @@
+// Dashboard navigation tabs, highlighting the current section.
+
 "use client";
 
 import Link from "next/link";

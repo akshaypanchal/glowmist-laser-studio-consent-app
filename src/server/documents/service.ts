@@ -1,3 +1,5 @@
+// Creates a client's consent form (pinned to the current template version) with its signing link, and issues replacement links.
+
 import "server-only";
 import { and, desc, eq } from "drizzle-orm";
 import { documentReference } from "@/lib/crypto";

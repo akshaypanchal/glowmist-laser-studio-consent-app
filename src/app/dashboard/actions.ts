@@ -1,3 +1,5 @@
+// Sign-out action for the dashboard.
+
 "use server";
 
 import { redirect } from "next/navigation";

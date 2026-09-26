@@ -1,3 +1,5 @@
+// Checks a staff email and password.
+
 import "server-only";
 import { eq } from "drizzle-orm";
 import { hashPassword, verifyPassword } from "@/lib/password";

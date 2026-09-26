@@ -1,3 +1,5 @@
+// Frame around every dashboard page. Redirects to /login if not signed in.
+
 import { DashboardNav } from "@/components/dashboard/nav";
 import { requireUser } from "@/server/auth/session";
 import { logout } from "./actions";

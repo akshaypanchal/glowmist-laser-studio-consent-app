@@ -1,3 +1,5 @@
+// Signing links: creates them, revokes them, and checks a link is valid (exists, not expired, not used, not revoked, document still signable).
+
 import "server-only";
 import { and, eq, isNull } from "drizzle-orm";
 import { createSigningToken, hashSigningToken, isWellFormedSigningToken } from "@/lib/signing-token";

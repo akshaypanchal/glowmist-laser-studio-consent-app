@@ -1,3 +1,5 @@
+// Dashboard home page.
+
 import Link from "next/link";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";

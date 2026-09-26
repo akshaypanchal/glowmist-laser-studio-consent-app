@@ -1,3 +1,5 @@
+// Tests creating consent forms and signing link checks, including another studio being refused.
+
 import { eq } from "drizzle-orm";
 import { beforeAll, describe, expect, it } from "vitest";
 import { listDocumentEvents, verifyDocumentChain } from "@/server/audit/service";
