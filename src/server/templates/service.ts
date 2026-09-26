@@ -1,3 +1,5 @@
+// Creates consent templates and new versions. Versions are never edited, so a signed form always points at the exact wording signed.
+
 import "server-only";
 import { and, desc, eq } from "drizzle-orm";
 import { canonicalJson, sha256Hex } from "@/lib/crypto";

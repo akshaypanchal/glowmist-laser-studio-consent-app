@@ -1,3 +1,5 @@
+// White bordered box used to group content on dashboard pages.
+
 import { cn } from "@/lib/cn";
 
 export function Card({ className, padded = true, ...props }: React.HTMLAttributes<HTMLDivElement> & { padded?: boolean }) {

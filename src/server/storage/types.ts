@@ -1,3 +1,5 @@
+// The common interface every file storage implements, and where each kind of file is stored.
+
 export interface StorageService {
   upload(key: string, data: Uint8Array, contentType: string): Promise<void>;
   download(key: string): Promise<Uint8Array>;

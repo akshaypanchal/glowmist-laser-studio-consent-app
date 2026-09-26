@@ -1,3 +1,5 @@
+// Shared button styles. `buttonClass()` lets links look like buttons.
+
 import { cn } from "@/lib/cn";
 
 type Variant = "primary" | "secondary" | "danger" | "ghost";

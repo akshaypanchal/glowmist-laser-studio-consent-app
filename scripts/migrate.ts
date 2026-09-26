@@ -1,3 +1,5 @@
+// Applies the SQL migrations in /drizzle to the database in TURSO_DATABASE_URL. Run with `npm run db:migrate`.
+
 import "dotenv/config";
 import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";

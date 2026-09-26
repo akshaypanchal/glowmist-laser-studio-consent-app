@@ -1,3 +1,5 @@
+// Writes audit events (who did what, when, from which IP/browser) and reads/verifies a document's audit trail.
+
 import "server-only";
 import { and, asc, desc, eq } from "drizzle-orm";
 import { db } from "@/server/db";

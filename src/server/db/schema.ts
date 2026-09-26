@@ -1,3 +1,5 @@
+// Database tables (Drizzle ORM). After editing, run `npm run db:generate` to create a migration.
+
 import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 

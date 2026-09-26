@@ -1,3 +1,5 @@
+// Creates the random token in each client's signing link. The database only keeps its hash, so a leaked database can't be used to sign.
+
 import { randomToken, sha256Hex } from "./crypto";
 
 /**

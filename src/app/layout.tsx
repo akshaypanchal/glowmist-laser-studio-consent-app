@@ -1,3 +1,5 @@
+// Root HTML layout shared by every page (public signing pages and the staff dashboard).
+
 import type { Metadata } from "next";
 import "./globals.css";
 

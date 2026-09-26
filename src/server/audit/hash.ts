@@ -1,3 +1,5 @@
+// Tamper-evident audit chain: each event's hash covers its contents plus the previous event's hash, and verifyChain() re-checks a whole chain.
+
 import { canonicalJson, sha256Hex } from "@/lib/crypto";
 
 export type AuditHashInput = {

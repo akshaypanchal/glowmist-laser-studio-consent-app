@@ -1,3 +1,5 @@
+// Hashes and checks staff passwords with scrypt. Plain passwords are never stored.
+
 import { randomBytes, scrypt, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
 

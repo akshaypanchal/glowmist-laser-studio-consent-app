@@ -1,3 +1,5 @@
+// ESLint rules: Next.js recommended + TypeScript checks. Run with `npm run lint`.
+
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 
