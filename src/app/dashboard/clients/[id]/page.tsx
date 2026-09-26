@@ -1,5 +1,6 @@
 // A client's page: their details, their consent forms and a button to create a new one.
 
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { StatusBadge } from "@/components/documents/status-badge";
 import { Card, CardTitle } from "@/components/ui/card";
@@ -57,7 +58,11 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
             <tbody>
               {documents.map((d) => (
                 <tr key={d.id} className="border-b border-stone-100 align-top last:border-0">
-                  <td className="px-4 py-3 font-mono">{d.reference}</td>
+                  <td className="px-4 py-3 font-mono">
+                    <Link href={`/dashboard/documents/${d.id}`} className="text-brand-700 hover:underline">
+                      {d.reference}
+                    </Link>
+                  </td>
                   <td className="px-4 py-3">{d.templateName}</td>
                   <td className="px-4 py-3">
                     <StatusBadge status={d.status} />

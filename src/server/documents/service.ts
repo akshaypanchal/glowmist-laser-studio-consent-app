@@ -1,4 +1,4 @@
-// Creates a client's consent form (pinned to the current template version) with its signing link, and issues replacement links.
+// Creates a client's consent form (pinned to the current template version) with its signing link, issues replacement links, and voids documents.
 
 import "server-only";
 import { and, desc, eq } from "drizzle-orm";
@@ -158,6 +158,36 @@ export async function reissueSigningLink(actor: Actor, documentId: string) {
       tx,
     );
     return { document, signingUrl: link.url };
+  });
+}
+
+/**
+ * Voids a document. A signed document keeps its PDF and history; voiding only
+ * marks it as no longer valid. Unsigned documents also have their links revoked.
+ */
+export async function voidDocument(actor: Actor, documentId: string, reason: string) {
+  return db().transaction(async (tx) => {
+    const [document] = await tx
+      .select()
+      .from(consentDocuments)
+      .where(and(eq(consentDocuments.id, documentId), eq(consentDocuments.organizationId, actor.organizationId)))
+      .limit(1);
+    if (!document) throw new NotFoundError("Document");
+    const moved = await transitionDocument(tx, document.id, document.status, "VOIDED");
+    if (!moved) throw new Error("The document changed while voiding. Please try again.");
+    await revokeSigningSessions(tx, document.id);
+    await recordEvent(
+      {
+        organizationId: actor.organizationId,
+        documentId: document.id,
+        eventType: "DOCUMENT_VOIDED",
+        actorType: "USER",
+        actorId: actor.userId,
+        context: actor.context,
+        metadata: { reason, previousStatus: document.status },
+      },
+      tx,
+    );
   });
 }
 
