@@ -98,7 +98,8 @@ describe("rejections", () => {
   it("rejects a missing consent checkbox", async () => {
     const { token } = await newDocument();
     await expectCode(completeSigning(token, { ...validSubmission(), consentAccepted: false }, testContext), "CONSENT_REQUIRED");
-    const { consentAccepted: _, ...withoutConsent } = validSubmission();
+    const withoutConsent: Record<string, unknown> = validSubmission();
+    delete withoutConsent.consentAccepted;
     await expectCode(completeSigning(token, withoutConsent, testContext), "CONSENT_REQUIRED");
   });
 
