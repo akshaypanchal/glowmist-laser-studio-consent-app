@@ -1,3 +1,5 @@
+// Defines the consent form's structure (treatments, medical history, consent wording, photo options) and holds the GlowMist form's wording as version 1. The signing page, the PDF and the stored answers are all built from this.
+
 import { z } from "zod";
 
 /**

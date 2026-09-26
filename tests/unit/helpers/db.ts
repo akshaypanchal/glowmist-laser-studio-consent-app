@@ -1,3 +1,5 @@
+// Test helper: creates a fresh, migrated SQLite database file for each test file.
+
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";

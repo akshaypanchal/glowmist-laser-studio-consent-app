@@ -1,3 +1,5 @@
+// Small coloured label, e.g. a document's status.
+
 import { cn } from "@/lib/cn";
 
 const tones = {

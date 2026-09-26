@@ -1,3 +1,5 @@
+// Tests the audit hash chain: linking, tamper detection and concurrent writes.
+
 import { eq } from "drizzle-orm";
 import { beforeAll, describe, expect, it } from "vitest";
 import { computeEventHash, verifyChain } from "@/server/audit/hash";

@@ -1,3 +1,5 @@
+// Home page at `/`. Clients normally arrive via their signing link instead; this just points staff to sign in.
+
 import Link from "next/link";
 
 export default function Home() {

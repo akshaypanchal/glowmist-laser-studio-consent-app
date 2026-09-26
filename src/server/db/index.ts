@@ -1,3 +1,5 @@
+// Opens the Turso/libSQL database connection used by all server code.
+
 import "server-only";
 import { createClient, type Client } from "@libsql/client";
 import { drizzle, type LibSQLDatabase } from "drizzle-orm/libsql";

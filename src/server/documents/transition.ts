@@ -1,3 +1,5 @@
+// Changes a document's status safely: only if the change is allowed and the document is still in the expected status.
+
 import "server-only";
 import { and, eq } from "drizzle-orm";
 import { consentDocuments, type DocumentStatus } from "@/server/db/schema";

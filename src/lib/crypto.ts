@@ -1,3 +1,5 @@
+// Hashing helpers: SHA-256, random tokens, stable (canonical) JSON for hashing, and document references like DOC-7K3F9Q2A.
+
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 
 export function sha256Hex(data: string | Uint8Array): string {

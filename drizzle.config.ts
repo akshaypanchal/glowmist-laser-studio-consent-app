@@ -1,3 +1,5 @@
+// Drizzle Kit settings: where the schema lives and where generated SQL migrations go (`npm run db:generate`).
+
 import "dotenv/config";
 import { defineConfig } from "drizzle-kit";
 

@@ -1,3 +1,5 @@
+// Reads and validates server-only settings (database, email, storage). None of these reach the browser.
+
 import "server-only";
 import { z } from "zod";
 

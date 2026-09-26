@@ -1,3 +1,5 @@
+// Picks the file storage (R2 or database) from STORAGE_DRIVER. The rest of the app only calls storage().
+
 import "server-only";
 import { env } from "@/server/env";
 import { DatabaseStorageService } from "./database";

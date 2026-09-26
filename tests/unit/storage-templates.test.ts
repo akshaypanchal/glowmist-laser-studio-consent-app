@@ -1,3 +1,5 @@
+// Tests database file storage and immutable template versions.
+
 import { beforeAll, describe, expect, it } from "vitest";
 import { GLOWMIST_CONSENT_V1 } from "@/lib/consent-template";
 import { db } from "@/server/db";

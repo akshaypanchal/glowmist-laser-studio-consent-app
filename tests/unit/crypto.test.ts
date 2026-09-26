@@ -1,3 +1,5 @@
+// Tests hashing, signing tokens and password hashing.
+
 import { describe, expect, it } from "vitest";
 import { canonicalJson, documentReference, safeEqualHex, sha256Hex } from "@/lib/crypto";
 import { hashPassword, verifyPassword } from "@/lib/password";

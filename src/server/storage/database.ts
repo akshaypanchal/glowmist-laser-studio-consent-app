@@ -1,3 +1,5 @@
+// File storage that keeps PDFs and signatures inside the Turso database. Default for the free setup.
+
 import "server-only";
 import { eq } from "drizzle-orm";
 import { db } from "@/server/db";

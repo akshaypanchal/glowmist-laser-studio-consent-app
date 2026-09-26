@@ -1,3 +1,5 @@
+// The list of audit trail event types and their human-readable labels.
+
 export const AUDIT_EVENT_TYPES = [
   "DOCUMENT_CREATED",
   "DOCUMENT_SENT",

@@ -1,3 +1,5 @@
+// Tests which document status changes are allowed.
+
 import { describe, expect, it } from "vitest";
 import { assertTransition, canTransition, InvalidTransitionError } from "@/server/documents/status";
 

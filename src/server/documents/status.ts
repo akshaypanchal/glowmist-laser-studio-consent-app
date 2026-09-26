@@ -1,3 +1,5 @@
+// The allowed document status changes (e.g. SENT -> VIEWED -> IN_PROGRESS -> SIGNED). Anything else is rejected.
+
 import type { DocumentStatus } from "@/server/db/schema";
 
 // The only status changes the application allows. Anything else is a bug.

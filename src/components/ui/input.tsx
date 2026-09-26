@@ -1,3 +1,5 @@
+// Shared text input, textarea and label styles for forms.
+
 import { cn } from "@/lib/cn";
 
 export function Input({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
