@@ -23,7 +23,7 @@ export type AuditEventType = (typeof AUDIT_EVENT_TYPES)[number];
 
 export const AUDIT_EVENT_LABELS: Record<AuditEventType, string> = {
   DOCUMENT_CREATED: "Document created",
-  DOCUMENT_SENT: "Document sent",
+  DOCUMENT_SENT: "Ready to sign",
   DOCUMENT_VIEWED: "Document viewed",
   SIGNING_STARTED: "Signing started",
   CONSENT_CHECKED: "Consent accepted",
@@ -36,6 +36,6 @@ export const AUDIT_EVENT_LABELS: Record<AuditEventType, string> = {
   DOCUMENT_DOWNLOADED: "Document downloaded",
   DOCUMENT_VOIDED: "Document voided",
   DOCUMENT_DECLINED: "Document declined",
-  SIGNING_LINK_REVOKED: "Signing link revoked",
+  SIGNING_LINK_REVOKED: "Earlier signing session closed",
   SIGNING_REJECTED: "Signing attempt rejected",
 };

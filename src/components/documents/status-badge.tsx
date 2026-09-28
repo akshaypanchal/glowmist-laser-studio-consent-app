@@ -15,6 +15,19 @@ const TONES: Record<DocumentStatus, "neutral" | "positive" | "attention" | "nega
   ARCHIVED: "neutral",
 };
 
+// Plain-language names. Forms are filled in at the studio, so "SENT" means ready but not opened yet.
+export const STATUS_LABELS: Record<DocumentStatus, string> = {
+  DRAFT: "Draft",
+  SENT: "Not started",
+  VIEWED: "Opened",
+  IN_PROGRESS: "Filling in",
+  SIGNED: "Signed",
+  EXPIRED: "Expired",
+  DECLINED: "Declined",
+  VOIDED: "Voided",
+  ARCHIVED: "Archived",
+};
+
 export function StatusBadge({ status }: { status: DocumentStatus }) {
-  return <Badge tone={TONES[status]}>{status.replace("_", " ")}</Badge>;
+  return <Badge tone={TONES[status]}>{STATUS_LABELS[status]}</Badge>;
 }

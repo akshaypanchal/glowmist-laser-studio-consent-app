@@ -1,4 +1,4 @@
-// A client's page: their details, their consent forms and a button to create a new one.
+// A client's page: their details, their consent forms, and buttons to start or continue a form on this device.
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -10,7 +10,7 @@ import { getClient } from "@/server/clients/service";
 import { SIGNABLE_STATUSES } from "@/server/documents/status";
 import { listClientDocuments } from "@/server/documents/service";
 import { listActiveTemplates } from "@/server/templates/queries";
-import { CreateConsentForm, ReissueLinkForm } from "./signing-link-forms";
+import { ContinueConsentForm, StartConsentForm } from "./consent-forms";
 
 export default async function ClientPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -37,7 +37,7 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
 
       <Card>
         <CardTitle>New consent form</CardTitle>
-        <CreateConsentForm clientId={client.id} templates={templates.map((t) => ({ id: t.id, name: t.name }))} />
+        <StartConsentForm clientId={client.id} templates={templates.map((t) => ({ id: t.id, name: t.name }))} />
       </Card>
 
       <Card padded={false} className="overflow-x-auto">
@@ -68,7 +68,7 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
                     <StatusBadge status={d.status} />
                   </td>
                   <td className="px-4 py-3">{formatDateTime(d.createdAt)}</td>
-                  <td className="px-4 py-3">{SIGNABLE_STATUSES.includes(d.status) && <ReissueLinkForm documentId={d.id} />}</td>
+                  <td className="px-4 py-3">{SIGNABLE_STATUSES.includes(d.status) && <ContinueConsentForm documentId={d.id} />}</td>
                 </tr>
               ))}
             </tbody>

@@ -1,36 +1,43 @@
-// End-to-end tests of the main journey: staff create a signing link, the client signs on a phone, and the studio sees the signed PDF. Also checks a signing link can't be used twice and that expired or replaced links are refused.
+// End-to-end tests of the main journey: staff start a consent form on the studio iPad, the client fills it in and signs, and the studio sees the signed PDF. Also checks a form can't be signed twice and that expired or reopened sessions are refused.
 
 import { devices, expect, test } from "@playwright/test";
 import { createClientWithLink, drawSignature, expireLink, fillConsentForm, signIn, tokenOf } from "./helpers";
 
-test("client signs on a phone and the studio gets the signed PDF", async ({ page, browser }) => {
+test("client signs on the studio iPad and the studio gets the signed PDF", async ({ browser }) => {
+  // Staff sign in on the iPad and start the form; it opens on the same screen.
+  const { viewport, userAgent, deviceScaleFactor, isMobile, hasTouch } = devices["iPad (gen 7)"];
+  const ipad = await browser.newContext({ viewport, userAgent, deviceScaleFactor, isMobile, hasTouch });
+  const page = await ipad.newPage();
   await signIn(page);
   const { signingUrl, clientUrl } = await createClientWithLink(page);
+  await page.getByRole("button", { name: "Continue" }).click();
+  await expect(page).toHaveURL(/\/sign\//);
+  expect(page.url()).not.toBe(signingUrl);
 
-  // The client opens the link on their phone, with no staff login.
-  const { viewport, userAgent, deviceScaleFactor, isMobile, hasTouch } = devices["iPhone 13"];
-  const phone = await browser.newContext({ viewport, userAgent, deviceScaleFactor, isMobile, hasTouch });
-  const client = await phone.newPage();
-  await client.goto(signingUrl);
-  await expect(client.getByRole("heading", { name: "GlowMist Laser Studio" })).toBeVisible();
-  await fillConsentForm(client);
-
-  const submit = client.getByRole("button", { name: "Sign & Submit" });
+  // The client fills it in and signs.
+  await expect(page.getByRole("heading", { name: "GlowMist Laser Studio" })).toBeVisible();
+  await fillConsentForm(page);
+  const submit = page.getByRole("button", { name: "Sign & Submit" });
   await expect(submit).toBeDisabled();
-  await client.locator('input[name="consentAccepted"]').check();
-  await client.getByLabel("Client name (print)").fill("Jane Tester");
-  await drawSignature(client);
+  await page.locator('input[name="consentAccepted"]').check();
+  await page.getByLabel("Client name (print)").fill("Jane Tester");
+  await drawSignature(page);
   await expect(submit).toBeEnabled();
   await submit.click();
 
-  await expect(client.getByText("Thank you, your consent form is signed.")).toBeVisible();
-  const reference = await client.locator("span.font-mono").textContent();
+  await expect(page.getByText("Thank you, your consent form is signed.")).toBeVisible();
+  await expect(page.getByText("Please hand the device back to the studio.")).toBeVisible();
+  const reference = await page.locator("span.font-mono").textContent();
   expect(reference).toMatch(/^DOC-[A-Z0-9]{8}$/);
+  const formUrl = page.url();
 
-  // Opening the link again is refused.
-  await client.goto(signingUrl);
-  await expect(client.getByText("This form has already been signed.")).toBeVisible();
-  await phone.close();
+  // Staff take the iPad back and return to the client's page.
+  await page.getByRole("link", { name: "Studio staff: back to the dashboard" }).click();
+  await expect(page).toHaveURL(clientUrl);
+
+  // Opening the form again is refused.
+  await page.goto(formUrl);
+  await expect(page.getByText("This form has already been signed.")).toBeVisible();
 
   // The studio sees the signed document and can download the PDF.
   await page.goto(clientUrl);
@@ -45,6 +52,7 @@ test("client signs on a phone and the studio gets the signed PDF", async ({ page
   // The audit trail recorded the signature.
   await page.goto("/dashboard/audit");
   await expect(page.getByText(reference!).first()).toBeVisible();
+  await ipad.close();
 });
 
 test("a used link can't be submitted a second time through the API", async ({ page, request }) => {
@@ -74,24 +82,33 @@ test("an expired link is refused", async ({ page, request }) => {
   await expireLink(tokenOf(signingUrl));
 
   await page.goto(signingUrl);
-  await expect(page.getByText("This signing link has expired.")).toBeVisible();
+  await expect(page.getByText("This form has expired.")).toBeVisible();
 
   const response = await request.post(`/api/signing/${tokenOf(signingUrl)}/consent`);
   expect(response.status()).toBe(410);
   expect((await response.json()).error).toBe("EXPIRED");
 });
 
-test("a replaced link stops working when staff create a new one", async ({ page }) => {
+test("continuing a form closes the earlier session", async ({ page }) => {
   await signIn(page);
   const { signingUrl, clientUrl } = await createClientWithLink(page);
 
   await page.goto(clientUrl);
-  await page.getByRole("button", { name: "New link" }).click();
-  const newUrl = (await page.getByTestId("signing-url").last().textContent())!.trim();
+  await page.getByRole("button", { name: "Continue" }).click();
+  await expect(page).toHaveURL(/\/sign\//);
+  const newUrl = page.url();
   expect(newUrl).not.toBe(signingUrl);
 
   await page.goto(signingUrl);
-  await expect(page.getByText("This signing link has been replaced.")).toBeVisible();
+  await expect(page.getByText("This form was reopened on another screen.")).toBeVisible();
   await page.goto(newUrl);
   await expect(page.getByRole("button", { name: "Sign & Submit" })).toBeVisible();
+});
+
+test("the client page no longer offers to email a link", async ({ page }) => {
+  await signIn(page);
+  const { clientUrl } = await createClientWithLink(page);
+  await page.goto(clientUrl);
+  await expect(page.getByText("Email the link to the client")).toHaveCount(0);
+  await expect(page.getByTestId("signing-url")).toHaveCount(0);
 });

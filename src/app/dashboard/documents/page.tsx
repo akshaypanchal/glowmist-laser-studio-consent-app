@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { DocumentTable } from "@/components/documents/document-table";
+import { STATUS_LABELS } from "@/components/documents/status-badge";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/cn";
 import { requireUser } from "@/server/auth/session";
@@ -30,7 +31,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
               filter === s ? "border-brand-600 bg-brand-100 text-brand-700" : "border-stone-300 text-stone-600 hover:bg-stone-100",
             )}
           >
-            {s ? s.replace("_", " ").toLowerCase() : "all"}
+            {s ? STATUS_LABELS[s] : "All"}
           </Link>
         ))}
       </div>

@@ -38,9 +38,9 @@ export class SigningError extends Error {
 
 const REJECTION_MESSAGES: Record<SessionRejection, string> = {
   INVALID: "This signing link is not valid.",
-  EXPIRED: "This signing link has expired. Please contact the studio for a new one.",
+  EXPIRED: "This form has expired. Please ask the studio to open it again.",
   USED: "This form has already been signed.",
-  REVOKED: "This signing link has been replaced. Please use the most recent link from the studio.",
+  REVOKED: "This form was reopened on another screen. Please ask the studio to continue it.",
   NOT_SIGNABLE: "This form can no longer be signed. Please contact the studio.",
 };
 
@@ -94,6 +94,7 @@ export async function loadSigningPage(token: string, context: RequestContext) {
 
   return {
     reference: document.reference,
+    clientId: document.clientId,
     content: parseTemplateContent(row.version.content),
     client: {
       firstName: row.client.firstName,

@@ -12,6 +12,8 @@ import { SignaturePad, type SignaturePadHandle } from "./signature-pad";
 type Props = {
   token: string;
   reference: string;
+  // Where studio staff go once the form is signed (the form is filled in on the studio's device).
+  returnHref: string;
   content: TemplateContent;
   client: { firstName: string; lastName: string; email: string; phone: string };
 };
@@ -57,7 +59,7 @@ function Check({ label, checked, onChange, name }: { label: string; checked: boo
   );
 }
 
-export function SigningForm({ token, reference, content, client }: Props) {
+export function SigningForm({ token, reference, content, client, returnHref }: Props) {
   const [details, setDetails] = useState<Record<DetailName, string>>({
     fullName: `${client.firstName} ${client.lastName}`.trim(),
     dateOfBirth: "",
@@ -141,8 +143,12 @@ export function SigningForm({ token, reference, content, client }: Props) {
         <h3 className="mb-2 text-xl font-semibold text-emerald-900">Thank you, your consent form is signed.</h3>
         <p className="text-emerald-900">
           Your document ID is <span className="font-mono">{done.reference}</span>. A copy will be emailed to{" "}
-          {details.email}. You can close this page.
+          {details.email}.
         </p>
+        <p className="mt-4 font-medium text-emerald-900">Please hand the device back to the studio.</p>
+        <a href={returnHref} className="mt-6 inline-block text-sm text-stone-600 underline">
+          Studio staff: back to the dashboard
+        </a>
       </div>
     );
   }
