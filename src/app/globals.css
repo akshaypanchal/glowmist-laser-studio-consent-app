@@ -1,0 +1,17 @@
+/* Global styles: loads Tailwind and defines the GlowMist brand colours used across the app. */
+
+@import "tailwindcss";
+
+@theme {
+  --color-brand-50: #fbf7f0;
+  --color-brand-100: #f4ead8;
+  --color-brand-500: #b8873b;
+  --color-brand-600: #9c6f2c;
+  --color-brand-700: #7a5622;
+  --font-serif: ui-serif, Georgia, "Times New Roman", serif;
+}
+
+body {
+  background: #faf8f5;
+  color: #1c1917;
+}
