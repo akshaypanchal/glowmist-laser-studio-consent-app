@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { SigningForm } from "@/components/signing/signing-form";
 import { requestContext } from "@/server/http";
 import { loadSigningPage, SigningError } from "@/server/signing/complete";
+import { allowSigningRequest } from "@/server/signing/http";
 
 export const dynamic = "force-dynamic";
 
@@ -15,9 +16,12 @@ export const metadata: Metadata = {
 
 export default async function SignPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
+  const context = await requestContext();
   let page;
   try {
-    page = await loadSigningPage(token, await requestContext());
+    const limit = await allowSigningRequest(token, context.ipAddress, "view");
+    if (!limit.allowed) throw new SigningError("REQUEST_INVALID", "Too many attempts. Please wait a few minutes and try again.");
+    page = await loadSigningPage(token, context);
   } catch (error) {
     if (!(error instanceof SigningError)) throw error;
     return (

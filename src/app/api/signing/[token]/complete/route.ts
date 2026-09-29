@@ -4,10 +4,14 @@ import { after, NextResponse } from "next/server";
 import { sendSignedCopies } from "@/server/email/delivery";
 import { contextFromHeaders } from "@/server/http";
 import { completeSigning, SigningError } from "@/server/signing/complete";
-import { signingErrorResponse } from "@/server/signing/http";
+import { allowSigningRequest, rateLimitedResponse, signingErrorResponse } from "@/server/signing/http";
 
 export async function POST(request: Request, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
+  const context = contextFromHeaders(request.headers);
+  const limit = await allowSigningRequest(token, context.ipAddress, "complete");
+  if (!limit.allowed) return rateLimitedResponse(limit.retryAfterSeconds);
+
   let body: unknown;
   try {
     body = await request.json();
@@ -15,7 +19,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ tok
     return signingErrorResponse(new SigningError("REQUEST_INVALID", "Invalid request."));
   }
   try {
-    const result = await completeSigning(token, body, contextFromHeaders(request.headers));
+    const result = await completeSigning(token, body, context);
     // The form is already SIGNED and stored. Emailing happens after the
     // response is sent, and a failure there never undoes the signature.
     after(() => sendSignedCopies(result.documentId));
