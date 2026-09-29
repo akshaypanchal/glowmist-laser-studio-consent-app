@@ -1,4 +1,4 @@
-// Server actions for clients: add a client, create a consent form and signing link (optionally emailing it), issue a new link.
+// Server actions for clients: add a client, start a consent form on this device, and reopen an unsigned one.
 
 "use server";
 
@@ -7,8 +7,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireUser } from "@/server/auth/session";
 import { clientInputSchema, createClient, type ClientInput } from "@/server/clients/service";
-import { createConsentDocument, NotFoundError, reissueSigningLink } from "@/server/documents/service";
-import { sendSigningInvitation } from "@/server/email/delivery";
+import { createConsentDocument, reissueSigningLink } from "@/server/documents/service";
 import { requestContext } from "@/server/http";
 
 export type FormState = { error?: string; fieldErrors?: Record<string, string[] | undefined> };
@@ -25,39 +24,36 @@ export async function createClientAction(_: FormState, formData: FormData): Prom
   redirect(`/dashboard/clients/${client.id}`);
 }
 
-export type LinkState = { error?: string; signingUrl?: string; reference?: string; emailed?: boolean | null; email?: string };
-
 const createDocumentSchema = z.object({ clientId: z.string().min(1), templateId: z.string().min(1) });
 
-export async function createConsentAction(_: LinkState, formData: FormData): Promise<LinkState> {
+/**
+ * Creates the consent form and opens it straight away on this device, so the
+ * client can fill it in and sign at the studio. Nothing is emailed; the
+ * one-time signing link never leaves this browser.
+ */
+export async function startConsentAction(formData: FormData) {
   const user = await requireUser();
-  const parsed = createDocumentSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { error: "Choose a consent form." };
-  try {
-    const result = await createConsentDocument(
-      { userId: user.id, organizationId: user.organizationId, context: await requestContext() },
-      parsed.data,
-    );
-    const emailed = formData.get("sendEmail") === "on" ? await sendSigningInvitation(result.document.id, result.signingUrl) : null;
-    revalidatePath(`/dashboard/clients/${parsed.data.clientId}`);
-    return { signingUrl: result.signingUrl, reference: result.document.reference, emailed, email: result.client.email };
-  } catch (error) {
-    if (error instanceof NotFoundError) return { error: error.message };
-    throw error;
-  }
+  const parsed = createDocumentSchema.parse(Object.fromEntries(formData));
+  const result = await createConsentDocument(
+    { userId: user.id, organizationId: user.organizationId, context: await requestContext() },
+    parsed,
+  );
+  revalidatePath(`/dashboard/clients/${parsed.clientId}`);
+  redirect(signingPath(result.signingUrl));
 }
 
-export async function reissueLinkAction(_: LinkState, formData: FormData): Promise<LinkState> {
+/** Reopens an unsigned form on this device. The previous signing session is closed first. */
+export async function continueConsentAction(formData: FormData) {
   const user = await requireUser();
   const documentId = z.string().min(1).parse(formData.get("documentId"));
-  try {
-    const result = await reissueSigningLink(
-      { userId: user.id, organizationId: user.organizationId, context: await requestContext() },
-      documentId,
-    );
-    const emailed = formData.get("sendEmail") === "on" ? await sendSigningInvitation(result.document.id, result.signingUrl) : null;
-    return { signingUrl: result.signingUrl, reference: result.document.reference, emailed };
-  } catch (error) {
-    return { error: error instanceof Error ? error.message : "Could not create a new link." };
-  }
+  const result = await reissueSigningLink(
+    { userId: user.id, organizationId: user.organizationId, context: await requestContext() },
+    documentId,
+  );
+  redirect(signingPath(result.signingUrl));
+}
+
+// Redirect within this app (same host the staff member is on), whatever APP_URL is set to.
+function signingPath(url: string) {
+  return new URL(url).pathname;
 }

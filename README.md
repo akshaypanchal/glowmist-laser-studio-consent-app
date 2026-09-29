@@ -1,7 +1,8 @@
 # GlowMist Laser Studio consent app
 
-Clients receive a personal signing link, fill in the GlowMist treatment consent
-form, and sign it on screen. The server creates a signed PDF, stores it with the
+At the studio, staff open a client's consent form on the iPad (or any screen) from
+the dashboard, and the client fills in the GlowMist treatment consent form and
+signs it on screen. No signing link is emailed. The server creates a signed PDF, stores it with the
 form answers, keeps a tamper-evident audit trail, and emails the PDF to the
 client and the studio. Staff manage everything from a login-protected dashboard.
 
@@ -39,7 +40,7 @@ See [`.env.example`](.env.example) for the full list. The ones that matter in pr
 | Variable | Purpose |
 | --- | --- |
 | `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` | Turso database |
-| `APP_URL` | Public URL used in signing links |
+| `APP_URL` | Public URL of the app |
 | `EMAIL_DRIVER=resend`, `RESEND_API_KEY` | Sending email |
 | `EMAIL_FROM` | Sender on a domain verified in Resend |
 | `STUDIO_RECORDS_EMAIL` | Studio inbox that receives each signed form |
@@ -83,7 +84,7 @@ src/
 
 ## How the data is protected
 
-- Signing links contain a random 256-bit token; only its SHA-256 hash is stored.
+- Each form opens under a one-time URL with a random 256-bit token; only its SHA-256 hash is stored. Opening the form again from the dashboard closes the earlier session.
 - Template versions are never edited. A signed document always points at the exact wording signed.
 - Every audit event stores the hash of the previous one, so editing or deleting history is detectable.
 - Document status only moves along allowed transitions (for example `SENT → VIEWED → IN_PROGRESS → SIGNED`).

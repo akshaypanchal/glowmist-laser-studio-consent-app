@@ -43,7 +43,13 @@ export default async function SignPage({ params }: { params: Promise<{ token: st
       <p className="mb-6 text-stone-700">
         Hello {page.client.firstName}, please review and complete the form below carefully.
       </p>
-      <SigningForm token={token} content={page.content} client={page.client} reference={page.reference} />
+      <SigningForm
+        token={token}
+        content={page.content}
+        client={page.client}
+        reference={page.reference}
+        returnHref={`/dashboard/clients/${page.clientId}`}
+      />
     </main>
   );
 }

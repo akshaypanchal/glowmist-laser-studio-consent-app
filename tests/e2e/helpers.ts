@@ -1,4 +1,4 @@
-// Shared helpers for the end-to-end tests: signing in as staff, creating a client with a signing link, filling in the consent form, and reaching into the test database for cases a browser can't set up (expired links, a second studio).
+// Shared helpers for the end-to-end tests: signing in as staff, creating a client and starting their form, filling in the consent form, and reaching into the test database for cases a browser can't set up (expired links, a second studio).
 
 import { createClient } from "@libsql/client";
 import { expect, type Page } from "@playwright/test";
@@ -23,7 +23,10 @@ export async function signIn(page: Page, user: { email: string; password: string
 
 let clientCount = 0;
 
-/** Adds a client and creates a signing link for them. Returns the link and the client's page URL. */
+/**
+ * Adds a client and starts a consent form for them, which opens the form on
+ * the same screen (in-studio signing). Returns the form's URL and the client's page URL.
+ */
 export async function createClientWithLink(page: Page) {
   clientCount++;
   const email = `client${clientCount}-${Date.now()}@e2e.test`;
@@ -35,9 +38,10 @@ export async function createClientWithLink(page: Page) {
   await expect(page).toHaveURL(/\/dashboard\/clients\/[0-9a-f-]{36}$/);
   const clientUrl = page.url();
 
-  await page.getByRole("button", { name: "Create signing link" }).click();
-  const signingUrl = (await page.getByTestId("signing-url").textContent())!.trim();
-  expect(signingUrl).toMatch(/\/sign\/[A-Za-z0-9_-]{43}$/);
+  await page.getByRole("button", { name: "Start consent form" }).click();
+  await expect(page).toHaveURL(/\/sign\/[A-Za-z0-9_-]{43}$/);
+  const signingUrl = page.url();
+  await page.goto(clientUrl);
   return { signingUrl, clientUrl, email };
 }
 
