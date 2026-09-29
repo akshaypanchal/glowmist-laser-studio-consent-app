@@ -46,6 +46,14 @@ See [`.env.example`](.env.example) for the full list. The ones that matter in pr
 | `STORAGE_DRIVER` and `R2_*` | Where PDFs and signatures are stored |
 | `CRON_SECRET` | Protects the daily email-retry job |
 
+## Email setup (Resend)
+
+1. Create a free Resend account and add a domain you own under **Domains**. Add the DNS records Resend shows and wait until it says Verified. Until then Resend only delivers to your own address.
+2. Create an API key and set `EMAIL_DRIVER=resend`, `RESEND_API_KEY`, and `EMAIL_FROM` (an address on the verified domain).
+3. Set `STUDIO_RECORDS_EMAIL` to the inbox that should get the studio's copy of every signed form.
+
+When a form is signed, the client and the studio each get the signed PDF. If Resend is down, the form still counts as signed; the failure is recorded and retried by a daily Vercel Cron job (`vercel.json`, needs `CRON_SECRET`), up to five attempts.
+
 ## Scripts
 
 | Command | What it does |
