@@ -16,8 +16,16 @@ export type DocumentRow = {
   templateName: string;
 };
 
-export function DocumentTable({ rows, timeZone }: { rows: DocumentRow[]; timeZone: string }) {
-  if (rows.length === 0) return <p className="p-6 text-stone-600">No documents yet.</p>;
+export function DocumentTable({
+  rows,
+  timeZone,
+  emptyMessage = "No documents yet.",
+}: {
+  rows: DocumentRow[];
+  timeZone: string;
+  emptyMessage?: string;
+}) {
+  if (rows.length === 0) return <p className="p-6 text-stone-600">{emptyMessage}</p>;
   return (
     <table className="w-full text-left text-sm">
       <thead className="border-b border-stone-200 bg-stone-50 text-stone-600">

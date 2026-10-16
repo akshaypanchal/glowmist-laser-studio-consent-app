@@ -1,14 +1,17 @@
-// Client list at `/dashboard/clients`.
+// Client list at `/dashboard/clients`, with a search box (`?q=`) that filters by name, email, phone or reference.
 
 import Link from "next/link";
 import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { cleanSearch } from "@/lib/list-filters";
 import { requireUser } from "@/server/auth/session";
 import { listClients } from "@/server/clients/service";
 
-export default async function ClientsPage() {
+export default async function ClientsPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const user = await requireUser();
-  const clients = await listClients(user.organizationId);
+  const search = cleanSearch((await searchParams).q);
+  const clients = await listClients(user.organizationId, { search });
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -17,9 +20,30 @@ export default async function ClientsPage() {
           Add client
         </Link>
       </div>
+      <form method="get" role="search" className="flex flex-wrap items-center gap-2">
+        <label htmlFor="client-search" className="sr-only">
+          Search clients
+        </label>
+        <Input
+          id="client-search"
+          type="search"
+          name="q"
+          defaultValue={search}
+          placeholder="Search by name, email or phone"
+          className="max-w-sm"
+        />
+        <button type="submit" className={buttonClass("secondary")}>
+          Search
+        </button>
+        {search && (
+          <Link href="/dashboard/clients" className={buttonClass("ghost")}>
+            Clear
+          </Link>
+        )}
+      </form>
       <Card padded={false} className="overflow-x-auto">
         {clients.length === 0 ? (
-          <p className="p-6 text-stone-600">No clients yet.</p>
+          <p className="p-6 text-stone-600">{search ? `No clients match “${search}”.` : "No clients yet."}</p>
         ) : (
           <table className="w-full text-left text-sm">
             <thead className="border-b border-stone-200 bg-stone-50 text-stone-600">
