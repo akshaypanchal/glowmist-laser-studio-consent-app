@@ -120,6 +120,8 @@ export const DOCUMENT_STATUSES = [
   "DECLINED",
   "VOIDED",
   "ARCHIVED",
+  // Removed by staff before it was signed. Hidden from every list; the row and its audit trail are kept.
+  "DELETED",
 ] as const;
 export type DocumentStatus = (typeof DOCUMENT_STATUSES)[number];
 

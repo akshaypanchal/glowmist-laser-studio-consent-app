@@ -1,7 +1,7 @@
 // Read-only queries for the dashboard: document lists, a document's full details, dashboard counts and recent audit events. Every query is limited to one studio.
 
 import "server-only";
-import { and, count, desc, eq, gte, inArray, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, ne, or, sql } from "drizzle-orm";
 import { containsPattern } from "@/lib/list-filters";
 import { db } from "@/server/db";
 import {
@@ -53,6 +53,8 @@ export async function listDocuments(organizationId: string, options: DocumentLis
     .where(
       and(
         eq(consentDocuments.organizationId, organizationId),
+        // Deleted documents never appear in lists; they stay reachable from the audit trail.
+        ne(consentDocuments.status, "DELETED"),
         options.status ? eq(consentDocuments.status, options.status) : undefined,
         pattern
           ? or(

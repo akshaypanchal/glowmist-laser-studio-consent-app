@@ -1,4 +1,4 @@
-// Simple fixed-window rate limiting kept in the database (serverless instances don't share memory). Used on the public signing endpoints and the login form to slow down guessing and abuse.
+// Simple fixed-window rate limiting kept in the database (serverless instances don't share memory). Used on the public signing endpoints, the login form and the delete-document password check to slow down guessing and abuse.
 
 import "server-only";
 import { sql } from "drizzle-orm";
@@ -18,6 +18,8 @@ export const LIMITS = {
   completePerToken: { limit: 10, windowSeconds: 600 },
   loginPerIp: { limit: 20, windowSeconds: 900 },
   loginPerEmail: { limit: 8, windowSeconds: 900 },
+  // Password re-entry when deleting an unsigned document, per staff user.
+  deletePerUser: { limit: 8, windowSeconds: 900 },
 } satisfies Record<string, RateLimitRule>;
 
 /**

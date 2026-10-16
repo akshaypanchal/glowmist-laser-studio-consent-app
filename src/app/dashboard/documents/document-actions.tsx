@@ -1,11 +1,11 @@
-// Buttons on the document page (check PDF, retry emails, void) that show the result of each action inline.
+// Buttons on the document page (check PDF, retry emails, void, delete unsigned) that show the result of each action inline.
 
 "use client";
 
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { retryEmailsAction, verifyPdfAction, voidDocumentAction, type ActionState } from "./actions";
+import { deleteDocumentAction, retryEmailsAction, verifyPdfAction, voidDocumentAction, type ActionState } from "./actions";
 
 function Result({ state }: { state: ActionState }) {
   if (state.error) return <p className="mt-2 text-sm text-red-700">{state.error}</p>;
@@ -53,6 +53,37 @@ export function VoidDocumentForm({ documentId }: { documentId: string }) {
       <Input name="reason" placeholder="Reason for voiding" className="max-w-xs" required />
       <Button type="submit" variant="danger" disabled={pending}>
         Void document
+      </Button>
+      <div className="w-full">
+        <Result state={state} />
+      </div>
+    </form>
+  );
+}
+
+export function DeleteDocumentForm({ documentId }: { documentId: string }) {
+  const [state, action, pending] = useActionState<ActionState, FormData>(deleteDocumentAction, {});
+  return (
+    <form
+      action={action}
+      onSubmit={(e) => {
+        if (!confirm("Delete this unsigned document? It will be removed from your lists and its signing link will stop working."))
+          e.preventDefault();
+      }}
+      className="flex flex-wrap items-start gap-2"
+    >
+      <input type="hidden" name="documentId" value={documentId} />
+      <Input
+        name="password"
+        type="password"
+        autoComplete="current-password"
+        placeholder="Your password"
+        aria-label="Your password"
+        className="max-w-xs"
+        required
+      />
+      <Button type="submit" variant="danger" disabled={pending}>
+        {pending ? "Deleting…" : "Delete document"}
       </Button>
       <div className="w-full">
         <Result state={state} />

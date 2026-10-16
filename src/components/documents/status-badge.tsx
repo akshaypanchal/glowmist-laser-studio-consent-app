@@ -13,6 +13,7 @@ const TONES: Record<DocumentStatus, "neutral" | "positive" | "attention" | "nega
   DECLINED: "negative",
   VOIDED: "negative",
   ARCHIVED: "neutral",
+  DELETED: "negative",
 };
 
 // Plain-language names. Forms are filled in at the studio, so "SENT" means ready but not opened yet.
@@ -26,6 +27,7 @@ export const STATUS_LABELS: Record<DocumentStatus, string> = {
   DECLINED: "Declined",
   VOIDED: "Voided",
   ARCHIVED: "Archived",
+  DELETED: "Deleted",
 };
 
 export function StatusBadge({ status }: { status: DocumentStatus }) {

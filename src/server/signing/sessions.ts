@@ -68,6 +68,8 @@ export async function validateSigningSession(
   const { session, document } = row;
   if (session.clientId !== document.clientId) return { ok: false, reason: "INVALID" };
   if (session.usedAt) return { ok: false, reason: "USED", document };
+  // Deleting revokes the link too; say the form can't be signed rather than "reopened on another screen".
+  if (document.status === "DELETED") return { ok: false, reason: "NOT_SIGNABLE", document };
   if (session.revokedAt) return { ok: false, reason: "REVOKED", document };
   if (session.expiresAt.getTime() <= Date.now() || document.expiresAt.getTime() <= Date.now()) {
     return { ok: false, reason: "EXPIRED", document };
