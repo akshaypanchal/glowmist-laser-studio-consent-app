@@ -1,20 +1,19 @@
-// One template: the current version's wording, and (for owners and admins) an editor that saves changes as a new version.
+// One template: the current version's wording and an editor that saves changes as a new version. Studio owner only.
 
 import { notFound } from "next/navigation";
 import { Card, CardTitle } from "@/components/ui/card";
-import { requireUser } from "@/server/auth/session";
+import { requireOwner } from "@/server/auth/session";
 import { getTemplate } from "@/server/templates/queries";
 import { parseTemplateContent } from "@/server/templates/service";
 import { VersionEditor } from "./version-editor";
 
 export default async function TemplatePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const user = await requireUser();
+  const user = await requireOwner();
   const template = await getTemplate(user.organizationId, id);
   if (!template || template.versions.length === 0) notFound();
   const current = template.versions[0];
   const content = parseTemplateContent(current.content);
-  const canEdit = user.role === "OWNER" || user.role === "ADMIN";
 
   return (
     <div className="space-y-6">
@@ -38,16 +37,14 @@ export default async function TemplatePage({ params }: { params: Promise<{ id: s
           </div>
         </div>
       </Card>
-      {canEdit && (
-        <Card>
-          <CardTitle>Change the wording</CardTitle>
-          <p className="mb-3 text-sm text-stone-600">
-            Edit the text below and save. This creates version {current.version + 1}. Forms already sent or signed keep the
-            version they were created with.
-          </p>
-          <VersionEditor templateId={template.id} initial={JSON.stringify(content, null, 2)} />
-        </Card>
-      )}
+      <Card>
+        <CardTitle>Change the wording</CardTitle>
+        <p className="mb-3 text-sm text-stone-600">
+          Edit the text below and save. This creates version {current.version + 1}. Forms already sent or signed keep the
+          version they were created with.
+        </p>
+        <VersionEditor templateId={template.id} initial={JSON.stringify(content, null, 2)} />
+      </Card>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-// End-to-end security checks: bad or missing signing tokens, submissions without consent or a signature, staff-only pages and downloads, owner-only Settings, one studio reaching another's documents, and the HTTP security headers.
+// End-to-end security checks: bad or missing signing tokens, submissions without consent or a signature, staff-only pages and downloads, owner-only Templates, Audit trail and Settings, one studio reaching another's documents, and the HTTP security headers.
 
 import { expect, test } from "@playwright/test";
 import { createClientWithLink, createOtherStudio, createStaffUser, signIn, tokenOf } from "./helpers";
@@ -45,13 +45,24 @@ test("staff pages and downloads need a login", async ({ page, request }) => {
   expect(download.status()).toBe(401);
 });
 
-test("Settings is only in the owner's profile menu and only the owner can open it", async ({ page, browser }) => {
+const OWNER_PAGES = [
+  { label: "Templates", path: "/dashboard/templates", heading: "Consent templates" },
+  { label: "Audit trail", path: "/dashboard/audit", heading: "Audit trail" },
+  { label: "Settings", path: "/dashboard/settings", heading: "Settings" },
+];
+
+test("Templates, Audit trail and Settings are only in the owner's profile menu and only the owner can open them", async ({
+  page,
+  browser,
+}) => {
   await signIn(page);
-  await expect(page.getByRole("navigation").getByRole("link", { name: "Settings" })).toHaveCount(0);
-  await page.getByRole("button", { name: /Studio Owner/ }).click();
-  await page.getByRole("menuitem", { name: "Settings" }).click();
-  await expect(page).toHaveURL(/\/dashboard\/settings$/);
-  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  for (const ownerPage of OWNER_PAGES) {
+    await expect(page.getByRole("navigation").getByRole("link", { name: ownerPage.label })).toHaveCount(0);
+    await page.getByRole("button", { name: /Studio Owner/ }).click();
+    await page.getByRole("menuitem", { name: ownerPage.label }).click();
+    await expect(page).toHaveURL(new RegExp(`${ownerPage.path}$`));
+    await expect(page.getByRole("heading", { name: ownerPage.heading, level: 1 })).toBeVisible();
+  }
 
   const staff = await createStaffUser();
   const staffContext = await browser.newContext();
@@ -59,10 +70,12 @@ test("Settings is only in the owner's profile menu and only the owner can open i
   await signIn(staffPage, staff);
   await staffPage.getByRole("button", { name: /Sam Staff/ }).click();
   await expect(staffPage.getByRole("menuitem", { name: "Sign out" })).toBeVisible();
-  await expect(staffPage.getByRole("menuitem", { name: "Settings" })).toHaveCount(0);
-  // Typing the address in sends them back to the dashboard.
-  await staffPage.goto("/dashboard/settings");
-  await expect(staffPage).toHaveURL(/\/dashboard$/);
+  for (const ownerPage of OWNER_PAGES) {
+    await expect(staffPage.getByRole("menuitem", { name: ownerPage.label })).toHaveCount(0);
+    // Typing the address in sends them back to the dashboard.
+    await staffPage.goto(ownerPage.path);
+    await expect(staffPage).toHaveURL(/\/dashboard$/);
+  }
   await staffContext.close();
 });
 

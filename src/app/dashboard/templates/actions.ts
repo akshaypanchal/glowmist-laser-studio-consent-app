@@ -1,17 +1,17 @@
-// Server action that saves edited template wording as a new version. Owners and admins only.
+// Server action that saves edited template wording as a new version. Studio owner only.
 
 "use server";
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { requireUser } from "@/server/auth/session";
+import { OWNER_ONLY_ROLES, requireUser } from "@/server/auth/session";
 import { getTemplate } from "@/server/templates/queries";
 import { createTemplateVersion } from "@/server/templates/service";
 
 export type VersionState = { error?: string; message?: string };
 
 export async function createVersionAction(_: VersionState, formData: FormData): Promise<VersionState> {
-  const user = await requireUser(["OWNER", "ADMIN"]);
+  const user = await requireUser(OWNER_ONLY_ROLES);
   const templateId = z.string().min(1).parse(formData.get("templateId"));
   if (!(await getTemplate(user.organizationId, templateId))) return { error: "Template not found." };
 

@@ -1,8 +1,8 @@
-// Frame around every dashboard page: studio name, section tabs and the signed-in user's menu (Settings lives there, for the owner only). Redirects to /login if not signed in.
+// Frame around every dashboard page: studio name, section tabs and the signed-in user's menu (Templates, Audit trail and Settings live there, for the owner only). Redirects to /login if not signed in.
 
 import { DashboardNav } from "@/components/dashboard/nav";
 import { UserMenu } from "@/components/dashboard/user-menu";
-import { canOpenSettings, requireUser } from "@/server/auth/session";
+import { canOpenOwnerPages, requireUser } from "@/server/auth/session";
 
 export const dynamic = "force-dynamic";
 
@@ -10,8 +10,6 @@ const NAV = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/dashboard/clients", label: "Clients" },
   { href: "/dashboard/documents", label: "Documents" },
-  { href: "/dashboard/templates", label: "Templates" },
-  { href: "/dashboard/audit", label: "Audit trail" },
 ];
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -24,7 +22,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <span className="font-serif text-lg text-brand-700">{user.organizationName}</span>
             <DashboardNav items={NAV} />
           </div>
-          <UserMenu name={user.name} role={user.role} showSettings={canOpenSettings(user.role)} />
+          <UserMenu name={user.name} role={user.role} showOwnerLinks={canOpenOwnerPages(user.role)} />
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>

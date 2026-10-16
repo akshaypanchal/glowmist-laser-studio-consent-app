@@ -8,7 +8,7 @@ describe("requiredParts", () => {
   it("marks every client detail, a treatment and a photo choice as required, and medical history as optional", () => {
     const parts = requiredParts(GLOWMIST_CONSENT_V1);
     expect(Object.values(parts.client).every(Boolean)).toBe(true);
-    expect(Object.keys(parts.client)).toHaveLength(8);
+    expect(Object.keys(parts.client)).toHaveLength(7);
     expect(parts).toMatchObject({
       treatments: true,
       photography: true,

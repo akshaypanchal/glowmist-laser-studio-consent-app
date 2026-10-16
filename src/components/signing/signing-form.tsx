@@ -24,8 +24,7 @@ const DETAIL_FIELDS = [
   { name: "email", label: "Email", type: "email", autoComplete: "email" },
   { name: "phone", label: "Phone number", type: "tel", autoComplete: "tel" },
   { name: "mailingAddress", label: "Mailing address", type: "text", autoComplete: "street-address", wide: true },
-  { name: "emergencyContact", label: "Emergency contact", type: "text", autoComplete: "off" },
-  { name: "emergencyPhone", label: "Emergency phone", type: "tel", autoComplete: "off" },
+  { name: "emergencyPhone", label: "Emergency contact number", type: "tel", autoComplete: "off" },
   { name: "dateOfService", label: "Date of service", type: "date", autoComplete: "off" },
 ] as const;
 
@@ -91,7 +90,6 @@ export function SigningForm({ token, reference, content, client, returnHref }: P
     email: client.email,
     phone: client.phone,
     mailingAddress: "",
-    emergencyContact: "",
     emergencyPhone: "",
     dateOfService: new Date().toLocaleDateString("en-CA"),
   });

@@ -1,10 +1,11 @@
 // Adds and looks up clients. Every query is limited to the signed-in user's studio.
 
 import "server-only";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/server/db";
 import { clients } from "@/server/db/schema";
+import { containsPattern } from "@/lib/list-filters";
 
 export const clientInputSchema = z.object({
   firstName: z.string().trim().min(1, "First name is required").max(100),
@@ -25,11 +26,25 @@ export async function createClient(organizationId: string, input: ClientInput) {
   return row;
 }
 
-export async function listClients(organizationId: string) {
+/** Lists the studio's clients. `search` matches anywhere in the name, email, phone or external reference, ignoring case. */
+export async function listClients(organizationId: string, options: { search?: string } = {}) {
+  const pattern = options.search ? containsPattern(options.search) : undefined;
   return db()
     .select()
     .from(clients)
-    .where(eq(clients.organizationId, organizationId))
+    .where(
+      and(
+        eq(clients.organizationId, organizationId),
+        pattern
+          ? or(
+              sql`(${clients.firstName} || ' ' || ${clients.lastName}) like ${pattern} escape '\\'`,
+              sql`${clients.email} like ${pattern} escape '\\'`,
+              sql`${clients.phone} like ${pattern} escape '\\'`,
+              sql`${clients.externalReference} like ${pattern} escape '\\'`,
+            )
+          : undefined,
+      ),
+    )
     .orderBy(asc(clients.lastName), asc(clients.firstName));
 }
 

@@ -1,15 +1,15 @@
-// Audit Trail page: the studio's 100 most recent audit events across all documents, newest first.
+// Audit Trail page: the studio's 100 most recent audit events across all documents, newest first. Studio owner only.
 
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { formatDateTime } from "@/lib/format";
 import { AUDIT_EVENT_LABELS, type AuditEventType } from "@/server/audit/events";
-import { requireUser } from "@/server/auth/session";
+import { requireOwner } from "@/server/auth/session";
 import { recentAuditEvents } from "@/server/documents/queries";
 import { env } from "@/server/env";
 
 export default async function AuditPage() {
-  const user = await requireUser();
+  const user = await requireOwner();
   const rows = await recentAuditEvents(user.organizationId);
   const tz = env().STUDIO_TIMEZONE;
   return (
