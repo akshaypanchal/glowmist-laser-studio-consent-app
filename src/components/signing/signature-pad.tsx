@@ -29,7 +29,7 @@ export const SignaturePad = forwardRef<SignaturePadHandle, { onChange: (hasSigna
           onEnd={() => onChange(!(canvas.current?.isEmpty() ?? true))}
           canvasProps={{
             className: "block h-48 w-full touch-none",
-            "aria-label": "Signature area. Draw your signature here.",
+            "aria-label": "Signature area, required. Draw your signature here.",
             // @ts-expect-error data attributes are valid on canvas
             "data-testid": "signature-canvas",
           }}

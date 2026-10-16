@@ -58,3 +58,23 @@ export function answersSchema(content: TemplateContent) {
 }
 
 export type ConsentAnswers = z.infer<ReturnType<typeof answersSchema>>;
+
+/**
+ * Says which parts of the form must be filled in, worked out by trying an empty
+ * value against the schemas above. The signing page uses this to mark required
+ * fields, so the markers always match what validation actually demands.
+ */
+export function requiredParts(content: TemplateContent) {
+  const answers = answersSchema(content).shape;
+  const client = Object.fromEntries(
+    Object.entries(clientDetailsSchema.shape).map(([name, schema]) => [name, !schema.safeParse("").success]),
+  ) as Record<keyof z.infer<typeof clientDetailsSchema>, boolean>;
+  return {
+    client,
+    treatments: !answers.treatments.safeParse([]).success,
+    medicalConditions: !answers.medicalConditions.safeParse([]).success,
+    allergies: !answers.allergies.safeParse("").success,
+    otherConditions: !answers.otherConditions.safeParse("").success,
+    photography: !answers.photography.safeParse([]).success,
+  };
+}
