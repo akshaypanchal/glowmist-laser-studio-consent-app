@@ -1,4 +1,4 @@
-// Shared text input, textarea and label styles for forms.
+// Shared text input, textarea and label styles for forms, plus the red asterisk that marks a required field.
 
 import { cn } from "@/lib/cn";
 
@@ -26,6 +26,25 @@ export function Textarea({ className, ...props }: React.TextareaHTMLAttributes<H
   );
 }
 
-export function Label({ className, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) {
-  return <label className={cn("mb-1 block text-sm font-medium text-stone-700", className)} {...props} />;
+/** The red asterisk shown next to required fields. Hidden from screen readers, which hear "required" from the field itself. */
+export function RequiredMark() {
+  return (
+    <span aria-hidden="true" className="ml-0.5 text-red-600">
+      *
+    </span>
+  );
+}
+
+export function Label({
+  className,
+  required,
+  children,
+  ...props
+}: React.LabelHTMLAttributes<HTMLLabelElement> & { required?: boolean }) {
+  return (
+    <label className={cn("mb-1 block text-sm font-medium text-stone-700", className)} {...props}>
+      {children}
+      {required && <RequiredMark />}
+    </label>
+  );
 }

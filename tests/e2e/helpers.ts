@@ -55,7 +55,7 @@ export async function fillConsentForm(page: Page) {
   await page.getByLabel("Date of birth").fill("1990-04-12");
   await page.getByLabel("Phone number").fill("905-555-0100");
   await page.getByLabel("Mailing address").fill("1 Main St, Bradford ON");
-  await page.getByLabel("Emergency contact", { exact: true }).fill("John Tester");
+  await page.getByRole("textbox", { name: "Emergency contact", exact: true }).fill("John Tester");
   await page.getByLabel("Emergency phone").fill("905-555-0199");
   await page.getByLabel("Date of service").fill("2026-09-26");
   await page.locator('input[name="treatments"]').first().check();

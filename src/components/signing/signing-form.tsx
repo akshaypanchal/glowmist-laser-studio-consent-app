@@ -4,8 +4,8 @@
 
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input, Label, Textarea } from "@/components/ui/input";
-import { answersSchema } from "@/lib/consent-answers";
+import { Input, Label, RequiredMark, Textarea } from "@/components/ui/input";
+import { answersSchema, requiredParts } from "@/lib/consent-answers";
 import type { TemplateContent } from "@/lib/consent-template";
 import { SignaturePad, type SignaturePadHandle } from "./signature-pad";
 
@@ -35,16 +35,36 @@ function toggle(list: string[], value: string, on: boolean) {
   return on ? [...list, value] : list.filter((v) => v !== value);
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, required, children }: { title: string; required?: boolean; children: React.ReactNode }) {
   return (
     <section className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm sm:p-6">
-      <h3 className="mb-4 text-sm font-semibold tracking-wide text-brand-700 uppercase">{title}</h3>
+      <h3 className="mb-4 text-sm font-semibold tracking-wide text-brand-700 uppercase">
+        {title}
+        {required && (
+          <>
+            <RequiredMark />
+            <span className="sr-only"> (required)</span>
+          </>
+        )}
+      </h3>
       {children}
     </section>
   );
 }
 
-function Check({ label, checked, onChange, name }: { label: string; checked: boolean; onChange: (v: boolean) => void; name?: string }) {
+function Check({
+  label,
+  checked,
+  onChange,
+  name,
+  required,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  name?: string;
+  required?: boolean;
+}) {
   return (
     <label className="flex cursor-pointer items-start gap-2 py-1 text-sm">
       <input
@@ -52,9 +72,14 @@ function Check({ label, checked, onChange, name }: { label: string; checked: boo
         name={name}
         className="mt-0.5 h-4 w-4 shrink-0 accent-brand-600"
         checked={checked}
+        required={required}
+        aria-required={required || undefined}
         onChange={(e) => onChange(e.target.checked)}
       />
-      <span>{label}</span>
+      <span>
+        {label}
+        {required && <RequiredMark />}
+      </span>
     </label>
   );
 }
@@ -84,6 +109,7 @@ export function SigningForm({ token, reference, content, client, returnHref }: P
   const [done, setDone] = useState<{ reference: string } | null>(null);
   const pad = useRef<SignaturePadHandle>(null);
 
+  const required = requiredParts(content);
   const exclusive = new Set(content.photography.options.filter((o) => o.exclusive).map((o) => o.id));
 
   function choosePhoto(id: string, on: boolean) {
@@ -157,17 +183,23 @@ export function SigningForm({ token, reference, content, client, returnHref }: P
 
   return (
     <form onSubmit={submit} className="space-y-6" noValidate>
+      <p className="text-sm text-stone-600">
+        Fields marked with <span className="text-red-600">*</span> are required.
+      </p>
       <Section title="Client information">
         <div className="grid gap-4 sm:grid-cols-2">
           {DETAIL_FIELDS.map((f) => (
             <div key={f.name} className={"wide" in f && f.wide ? "sm:col-span-2" : undefined}>
-              <Label htmlFor={f.name}>{f.label}</Label>
+              <Label htmlFor={f.name} required={required.client[f.name]}>
+                {f.label}
+              </Label>
               <Input
                 id={f.name}
                 name={f.name}
                 type={f.type}
                 autoComplete={f.autoComplete}
-                required
+                required={required.client[f.name]}
+                aria-required={required.client[f.name] || undefined}
                 value={details[f.name]}
                 onChange={(e) => setDetails((d) => ({ ...d, [f.name]: e.target.value }))}
               />
@@ -177,7 +209,7 @@ export function SigningForm({ token, reference, content, client, returnHref }: P
         </div>
       </Section>
 
-      <Section title="Treatment(s) requested">
+      <Section title="Treatment(s) requested" required={required.treatments}>
         <p className="mb-2 text-sm text-stone-600">Please check all that apply.</p>
         <div className="grid gap-x-4 sm:grid-cols-2">
           {content.treatments.map((t) => (
@@ -186,7 +218,7 @@ export function SigningForm({ token, reference, content, client, returnHref }: P
         </div>
       </Section>
 
-      <Section title="Medical history">
+      <Section title="Medical history" required={required.medicalConditions}>
         <p className="mb-2 text-sm text-stone-600">Please check all that apply.</p>
         <div className="grid gap-x-4 sm:grid-cols-2">
           {content.medicalConditions.map((m) => (
@@ -195,11 +227,15 @@ export function SigningForm({ token, reference, content, client, returnHref }: P
         </div>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <div>
-            <Label htmlFor="allergies">Allergies (please specify)</Label>
+            <Label htmlFor="allergies" required={required.allergies}>
+              Allergies (please specify)
+            </Label>
             <Textarea id="allergies" rows={2} value={allergies} onChange={(e) => setAllergies(e.target.value)} />
           </div>
           <div>
-            <Label htmlFor="otherConditions">Other medical conditions</Label>
+            <Label htmlFor="otherConditions" required={required.otherConditions}>
+              Other medical conditions
+            </Label>
             <Textarea id="otherConditions" rows={2} value={otherConditions} onChange={(e) => setOtherConditions(e.target.value)} />
           </div>
         </div>
@@ -219,7 +255,8 @@ export function SigningForm({ token, reference, content, client, returnHref }: P
         </div>
       </Section>
 
-      <Section title={content.photography.heading}>
+      <Section title={content.photography.heading} required={required.photography}>
+        {required.photography && <p className="mb-2 text-sm text-stone-600">Please choose at least one option.</p>}
         {content.photography.options.map((o) => (
           <Check key={o.id} name="photography" label={o.label} checked={photography.includes(o.id)} onChange={(on) => choosePhoto(o.id, on)} />
         ))}
@@ -233,14 +270,30 @@ export function SigningForm({ token, reference, content, client, returnHref }: P
         ))}
       </Section>
 
+      {/* The agreement, printed name and drawn signature are always required: submit() and the server's completeSigning check all three. */}
       <Section title="Electronic signature">
-        <Check label={content.electronicSignatureConsent} checked={consentAccepted} onChange={onConsentChange} name="consentAccepted" />
+        <Check
+          label={content.electronicSignatureConsent}
+          checked={consentAccepted}
+          onChange={onConsentChange}
+          name="consentAccepted"
+          required
+        />
         <div className="mt-4">
-          <Label htmlFor="signerName">Client name (print)</Label>
-          <Input id="signerName" value={signerName} onChange={(e) => setSignerName(e.target.value)} autoComplete="name" />
+          <Label htmlFor="signerName" required>
+            Client name (print)
+          </Label>
+          <Input
+            id="signerName"
+            value={signerName}
+            onChange={(e) => setSignerName(e.target.value)}
+            autoComplete="name"
+            required
+            aria-required
+          />
         </div>
         <div className="mt-4">
-          <Label>Signature</Label>
+          <Label required>Signature</Label>
           <SignaturePad ref={pad} onChange={setHasSignature} />
           <Button type="button" variant="ghost" className="mt-2 px-2" onClick={() => pad.current?.clear()}>
             Clear signature
