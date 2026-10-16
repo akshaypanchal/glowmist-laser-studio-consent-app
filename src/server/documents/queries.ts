@@ -1,7 +1,8 @@
 // Read-only queries for the dashboard: document lists, a document's full details, dashboard counts and recent audit events. Every query is limited to one studio.
 
 import "server-only";
-import { and, count, desc, eq, gte, inArray } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, or, sql } from "drizzle-orm";
+import { containsPattern } from "@/lib/list-filters";
 import { db } from "@/server/db";
 import {
   auditEvents,
@@ -28,7 +29,22 @@ const documentRow = {
   templateName: consentTemplates.name,
 };
 
-export async function listDocuments(organizationId: string, options: { status?: DocumentStatus; limit?: number } = {}) {
+/** The date shown in the documents table: when it was signed, or when it was sent if not signed yet. */
+const shownDate = sql`coalesce(${consentDocuments.completedAt}, ${consentDocuments.createdAt})`;
+
+export type DocumentListOptions = {
+  status?: DocumentStatus;
+  /** Matches anywhere in the client's name or email, the form name or the reference, ignoring case. */
+  search?: string;
+  /** Only documents whose shown date is at or after this instant. */
+  from?: Date;
+  /** Only documents whose shown date is before this instant. */
+  before?: Date;
+  limit?: number;
+};
+
+export async function listDocuments(organizationId: string, options: DocumentListOptions = {}) {
+  const pattern = options.search ? containsPattern(options.search) : undefined;
   return db()
     .select(documentRow)
     .from(consentDocuments)
@@ -38,6 +54,16 @@ export async function listDocuments(organizationId: string, options: { status?: 
       and(
         eq(consentDocuments.organizationId, organizationId),
         options.status ? eq(consentDocuments.status, options.status) : undefined,
+        pattern
+          ? or(
+              sql`(${clients.firstName} || ' ' || ${clients.lastName}) like ${pattern} escape '\\'`,
+              sql`${clients.email} like ${pattern} escape '\\'`,
+              sql`${consentTemplates.name} like ${pattern} escape '\\'`,
+              sql`${consentDocuments.reference} like ${pattern} escape '\\'`,
+            )
+          : undefined,
+        options.from ? sql`${shownDate} >= ${options.from.getTime()}` : undefined,
+        options.before ? sql`${shownDate} < ${options.before.getTime()}` : undefined,
       ),
     )
     .orderBy(desc(consentDocuments.createdAt))
