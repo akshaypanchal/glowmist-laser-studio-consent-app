@@ -64,6 +64,13 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   return row ?? null;
 }
 
+/** Only the studio owner can open Settings (studio details, staff accounts, passwords). */
+export const SETTINGS_ROLES = ["OWNER"] as const satisfies readonly UserRole[];
+
+export function canOpenSettings(role: UserRole) {
+  return (SETTINGS_ROLES as readonly UserRole[]).includes(role);
+}
+
 /**
  * Every dashboard page and server action calls this. Authorization is always
  * checked on the server; hiding a button in the UI is never the only guard.

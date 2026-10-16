@@ -100,3 +100,18 @@ export async function createOtherStudio() {
   });
   return user;
 }
+
+/** Adds a staff (non-owner) login to the e2e owner's studio, to check owner-only pages stay closed to them. */
+export async function createStaffUser() {
+  const db = testDb();
+  const [owner] = await db.select().from(schema.users).where(eq(schema.users.email, E2E_OWNER.email));
+  const user = { email: `staff-${Date.now()}@e2e.test`, password: "staff-member-password-1" };
+  await db.insert(schema.users).values({
+    organizationId: owner.organizationId,
+    name: "Sam Staff",
+    email: user.email,
+    role: "STAFF",
+    passwordHash: await hashPassword(user.password),
+  });
+  return user;
+}
