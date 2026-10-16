@@ -64,11 +64,11 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   return row ?? null;
 }
 
-/** Only the studio owner can open Settings (studio details, staff accounts, passwords). */
-export const SETTINGS_ROLES = ["OWNER"] as const satisfies readonly UserRole[];
+/** Only the studio owner can open the pages in the profile menu: Templates, Audit trail and Settings. */
+export const OWNER_ONLY_ROLES = ["OWNER"] as const satisfies readonly UserRole[];
 
-export function canOpenSettings(role: UserRole) {
-  return (SETTINGS_ROLES as readonly UserRole[]).includes(role);
+export function canOpenOwnerPages(role: UserRole) {
+  return (OWNER_ONLY_ROLES as readonly UserRole[]).includes(role);
 }
 
 /**
@@ -79,5 +79,12 @@ export async function requireUser(roles?: readonly UserRole[]): Promise<CurrentU
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   if (roles && !roles.includes(user.role)) throw new Error("Not allowed");
+  return user;
+}
+
+/** For owner-only pages: anyone else is sent back to the dashboard, even if they type the address in. */
+export async function requireOwner(): Promise<CurrentUser> {
+  const user = await requireUser();
+  if (!canOpenOwnerPages(user.role)) redirect("/dashboard");
   return user;
 }

@@ -1,16 +1,13 @@
 // Settings page: studio name and records email, staff accounts, and changing your password. Only the studio owner can open it; anyone else is sent back to the dashboard.
 
 import { Card, CardTitle } from "@/components/ui/card";
-import { redirect } from "next/navigation";
-import { canOpenSettings, requireUser } from "@/server/auth/session";
+import { requireOwner } from "@/server/auth/session";
 import { env } from "@/server/env";
 import { getOrganization, listUsers } from "@/server/users/service";
 import { AddUserForm, ChangePasswordForm, StudioForm } from "./settings-forms";
 
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ password?: string }> }) {
-  const user = await requireUser();
-  // Checked on the server, so typing the address in does not get past it.
-  if (!canOpenSettings(user.role)) redirect("/dashboard");
+  const user = await requireOwner();
   const { password } = await searchParams;
   const [org, staff] = await Promise.all([getOrganization(user.organizationId), listUsers(user.organizationId)]);
 
