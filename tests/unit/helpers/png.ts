@@ -52,7 +52,6 @@ export function validAnswers() {
       email: "jane@example.com",
       phone: "905-555-0100",
       mailingAddress: "1 Main St, Bradford ON",
-      emergencyContact: "John Doe",
       emergencyPhone: "905-555-0199",
       dateOfService: "2026-09-26",
     },

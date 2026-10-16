@@ -18,8 +18,9 @@ export const clientDetailsSchema = z.object({
   email: z.email("Enter a valid email").trim().max(254),
   phone: requiredText("Phone number", 40),
   mailingAddress: requiredText("Mailing address", 500),
-  emergencyContact: requiredText("Emergency contact", 200),
-  emergencyPhone: requiredText("Emergency phone", 40),
+  // One field for the emergency contact's phone number. Forms signed before this
+  // change also stored a separate emergencyContact (name); the document page still shows it.
+  emergencyPhone: requiredText("Emergency contact number", 40),
   dateOfService: isoDate("Date of service"),
 });
 
