@@ -7,13 +7,20 @@ import { Card, CardTitle } from "@/components/ui/card";
 import { formatDateTime } from "@/lib/format";
 import { requireUser } from "@/server/auth/session";
 import { getClient } from "@/server/clients/service";
-import { SIGNABLE_STATUSES } from "@/server/documents/status";
+import { DELETABLE_STATUSES, SIGNABLE_STATUSES } from "@/server/documents/status";
 import { listClientDocuments } from "@/server/documents/service";
 import { listActiveTemplates } from "@/server/templates/queries";
 import { ContinueConsentForm, StartConsentForm } from "./consent-forms";
 
-export default async function ClientPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ClientPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ deleted?: string }>;
+}) {
   const { id } = await params;
+  const { deleted } = await searchParams;
   const user = await requireUser();
   const client = await getClient(user.organizationId, id);
   if (!client) notFound();
@@ -34,6 +41,12 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
           {client.phone ? ` · ${client.phone}` : ""}
         </p>
       </div>
+
+      {deleted && (
+        <p className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          The unsigned document was deleted.
+        </p>
+      )}
 
       <Card>
         <CardTitle>New consent form</CardTitle>
@@ -68,7 +81,16 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
                     <StatusBadge status={d.status} />
                   </td>
                   <td className="px-4 py-3">{formatDateTime(d.createdAt)}</td>
-                  <td className="px-4 py-3">{SIGNABLE_STATUSES.includes(d.status) && <ContinueConsentForm documentId={d.id} />}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-wrap items-center gap-3">
+                      {SIGNABLE_STATUSES.includes(d.status) && <ContinueConsentForm documentId={d.id} />}
+                      {DELETABLE_STATUSES.includes(d.status) && (
+                        <Link href={`/dashboard/documents/${d.id}#delete`} className="text-sm text-red-700 hover:underline">
+                          Delete
+                        </Link>
+                      )}
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>

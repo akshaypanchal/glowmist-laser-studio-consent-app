@@ -1,12 +1,13 @@
-// Creates a client's consent form (pinned to the current template version) with its signing link, issues replacement links, and voids documents.
+// Creates a client's consent form (pinned to the current template version) with its signing link, issues replacement links, voids documents, and deletes unsigned ones.
 
 import "server-only";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, ne } from "drizzle-orm";
 import { documentReference } from "@/lib/crypto";
+import { verifyPassword } from "@/lib/password";
 import { recordEvent, type RequestContext } from "@/server/audit/service";
 import { db } from "@/server/db";
-import { clients, consentDocuments, consentTemplates, documentSigners } from "@/server/db/schema";
-import { SIGNABLE_STATUSES } from "@/server/documents/status";
+import { clients, consentDocuments, consentTemplates, documentSigners, users } from "@/server/db/schema";
+import { DELETABLE_STATUSES, SIGNABLE_STATUSES } from "@/server/documents/status";
 import { env } from "@/server/env";
 import { createSigningSession, revokeSigningSessions } from "@/server/signing/sessions";
 import { latestVersion } from "@/server/templates/service";
@@ -16,6 +17,14 @@ export class NotFoundError extends Error {
   constructor(what: string) {
     super(`${what} not found`);
     this.name = "NotFoundError";
+  }
+}
+
+/** The password typed to confirm a deletion did not match the signed-in user's password. */
+export class WrongPasswordError extends Error {
+  constructor() {
+    super("That password is not correct.");
+    this.name = "WrongPasswordError";
   }
 }
 
@@ -191,6 +200,51 @@ export async function voidDocument(actor: Actor, documentId: string, reason: str
   });
 }
 
+/**
+ * Deletes a document that was created or opened but never signed, after the
+ * signed-in user re-enters their password. Signed (and declined or voided)
+ * documents are refused. The row and its audit trail are kept for the records,
+ * but the document gets status DELETED, disappears from every list, and its
+ * signing link stops working.
+ */
+export async function deleteUnsignedDocument(actor: Actor, documentId: string, password: string) {
+  const [user] = await db()
+    .select({ passwordHash: users.passwordHash })
+    .from(users)
+    .where(and(eq(users.id, actor.userId), eq(users.organizationId, actor.organizationId)))
+    .limit(1);
+  if (!user || !(await verifyPassword(password, user.passwordHash))) throw new WrongPasswordError();
+
+  return db().transaction(async (tx) => {
+    const [document] = await tx
+      .select()
+      .from(consentDocuments)
+      .where(and(eq(consentDocuments.id, documentId), eq(consentDocuments.organizationId, actor.organizationId)))
+      .limit(1);
+    if (!document) throw new NotFoundError("Document");
+    if (!DELETABLE_STATUSES.includes(document.status)) {
+      throw new Error(`A ${document.status.toLowerCase()} document cannot be deleted. Only unsigned documents can be deleted.`);
+    }
+    // Conditional on the status we just read, so a signature completing at the same moment wins and the delete fails.
+    const moved = await transitionDocument(tx, document.id, document.status, "DELETED");
+    if (!moved) throw new Error("The document changed while deleting. Please refresh and try again.");
+    const revoked = await revokeSigningSessions(tx, document.id);
+    await recordEvent(
+      {
+        organizationId: actor.organizationId,
+        documentId: document.id,
+        eventType: "DOCUMENT_DELETED",
+        actorType: "USER",
+        actorId: actor.userId,
+        context: actor.context,
+        metadata: { reference: document.reference, previousStatus: document.status, signingLinksRevoked: revoked },
+      },
+      tx,
+    );
+    return { clientId: document.clientId };
+  });
+}
+
 export async function listClientDocuments(organizationId: string, clientId: string) {
   return db()
     .select({
@@ -203,6 +257,12 @@ export async function listClientDocuments(organizationId: string, clientId: stri
     })
     .from(consentDocuments)
     .innerJoin(consentTemplates, eq(consentTemplates.id, consentDocuments.templateId))
-    .where(and(eq(consentDocuments.organizationId, organizationId), eq(consentDocuments.clientId, clientId)))
+    .where(
+      and(
+        eq(consentDocuments.organizationId, organizationId),
+        eq(consentDocuments.clientId, clientId),
+        ne(consentDocuments.status, "DELETED"),
+      ),
+    )
     .orderBy(desc(consentDocuments.createdAt));
 }

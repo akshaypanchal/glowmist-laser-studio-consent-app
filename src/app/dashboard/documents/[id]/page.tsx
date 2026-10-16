@@ -1,4 +1,4 @@
-// A document's page: status, template version, hashes, the client's answers, PDF view/download, email history, the audit trail with its integrity check, and actions (void, retry emails).
+// A document's page: status, template version, hashes, the client's answers, PDF view/download, email history, the audit trail with its integrity check, and actions (void, retry emails, delete if unsigned).
 
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -11,9 +11,9 @@ import { formatDateTime } from "@/lib/format";
 import { AUDIT_EVENT_LABELS, type AuditEventType } from "@/server/audit/events";
 import { requireUser } from "@/server/auth/session";
 import { getDocumentDetail } from "@/server/documents/queries";
-import { SIGNABLE_STATUSES } from "@/server/documents/status";
+import { DELETABLE_STATUSES, SIGNABLE_STATUSES } from "@/server/documents/status";
 import { env } from "@/server/env";
-import { RetryEmailsButton, VerifyPdfButton, VoidDocumentForm } from "../document-actions";
+import { DeleteDocumentForm, RetryEmailsButton, VerifyPdfButton, VoidDocumentForm } from "../document-actions";
 
 const PHOTO_LABELS: Record<string, string> = {
   record: "Photos for client record",
@@ -41,6 +41,7 @@ export default async function DocumentPage({ params }: { params: Promise<{ id: s
   const answers = document.formData ? (JSON.parse(document.formData) as ConsentAnswers) : null;
   const canManage = user.role === "OWNER" || user.role === "ADMIN";
   const canVoid = canManage && (document.status === "SIGNED" || SIGNABLE_STATUSES.includes(document.status) || document.status === "DRAFT");
+  const canDelete = DELETABLE_STATUSES.includes(document.status);
   const failedEmails = detail.emails.filter((e) => e.status === "FAILED").length;
 
   return (
@@ -63,6 +64,13 @@ export default async function DocumentPage({ params }: { params: Promise<{ id: s
           </div>
         )}
       </div>
+
+      {document.status === "DELETED" && (
+        <p className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          This unsigned document was deleted. It no longer appears in your lists and its signing link no longer works. Its
+          history is kept below for your records.
+        </p>
+      )}
 
       <Card>
         <dl className="grid gap-4 sm:grid-cols-3">
@@ -178,6 +186,17 @@ export default async function DocumentPage({ params }: { params: Promise<{ id: s
             Voiding marks the document as no longer valid and cancels any open signing link. The PDF and history are kept.
           </p>
           <VoidDocumentForm documentId={document.id} />
+        </Card>
+      )}
+
+      {canDelete && (
+        <Card id="delete">
+          <CardTitle>Delete unsigned document</CardTitle>
+          <p className="mb-3 text-sm text-stone-600">
+            This form was never signed, so you can delete it. It will be removed from your lists and its signing link will stop
+            working. Enter your password to confirm. The deletion is recorded in the audit trail.
+          </p>
+          <DeleteDocumentForm documentId={document.id} />
         </Card>
       )}
     </div>
