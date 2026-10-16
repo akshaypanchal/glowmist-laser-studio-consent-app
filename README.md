@@ -18,7 +18,7 @@ own legal requirements.
 - pdf-lib for the signed PDF
 - Resend for email
 - Cloudflare R2 for files, or the database on the free setup (`STORAGE_DRIVER`)
-- Hosted on Vercel
+- Hosted on Vercel, with Vercel Web Analytics for page views
 
 ## Getting started
 
@@ -54,6 +54,12 @@ See [`.env.example`](.env.example) for the full list. The ones that matter in pr
 3. Set `STUDIO_RECORDS_EMAIL` to the inbox that should get the studio's copy of every signed form.
 
 When a form is signed, the client and the studio each get the signed PDF. If Resend is down, the form still counts as signed; the failure is recorded and retried by a daily Vercel Cron job (`vercel.json`, needs `CRON_SECRET`), up to five attempts.
+
+## Analytics (Vercel Web Analytics)
+
+The app counts page views with Vercel Web Analytics (`src/components/analytics.tsx`, added in the root layout). It sets no cookies and collects no form answers. Before each page view is sent, the signing token in `/sign/<token>` is replaced with `[token]` and query strings are dropped (`src/lib/redact-analytics-url.ts`).
+
+To turn it on, open the project in the Vercel dashboard, go to **Analytics** and click **Enable**, then redeploy. Data shows up after the next visits to the deployed site. Nothing is sent when running locally with `npm run dev`.
 
 ## Scripts
 
