@@ -1,4 +1,4 @@
-// Profile dropdown in the dashboard header: shows who is signed in and holds Settings (owner only) and Sign out, so they sit one tap away from the main tabs.
+// Profile dropdown in the dashboard header: shows who is signed in and holds Templates, Audit trail and Settings (owner only) and Sign out, so they sit one tap away from the main tabs.
 
 "use client";
 
@@ -14,9 +14,15 @@ const ROLE_LABELS: Record<UserRole, string> = {
   STAFF: "Staff",
 };
 
+const OWNER_LINKS = [
+  { href: "/dashboard/templates", label: "Templates" },
+  { href: "/dashboard/audit", label: "Audit trail" },
+  { href: "/dashboard/settings", label: "Settings" },
+];
+
 const itemClass = "block w-full px-4 py-2 text-left text-sm text-stone-700 hover:bg-stone-100";
 
-export function UserMenu({ name, role, showSettings }: { name: string; role: UserRole; showSettings: boolean }) {
+export function UserMenu({ name, role, showOwnerLinks }: { name: string; role: UserRole; showOwnerLinks: boolean }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -59,11 +65,12 @@ export function UserMenu({ name, role, showSettings }: { name: string; role: Use
       </button>
       {open && (
         <div role="menu" className="absolute right-0 z-20 mt-1 w-48 overflow-hidden rounded-md border border-stone-200 bg-white py-1 shadow-lg">
-          {showSettings && (
-            <Link role="menuitem" href="/dashboard/settings" className={itemClass} onClick={() => setOpen(false)}>
-              Settings
-            </Link>
-          )}
+          {showOwnerLinks &&
+            OWNER_LINKS.map((link) => (
+              <Link key={link.href} role="menuitem" href={link.href} className={itemClass} onClick={() => setOpen(false)}>
+                {link.label}
+              </Link>
+            ))}
           <form action={logout}>
             <button role="menuitem" type="submit" className={cn(itemClass, "text-brand-700")}>
               Sign out

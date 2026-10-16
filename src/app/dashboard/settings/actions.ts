@@ -4,13 +4,13 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireUser, SETTINGS_ROLES, startSession } from "@/server/auth/session";
+import { OWNER_ONLY_ROLES, requireUser, startSession } from "@/server/auth/session";
 import { addUser, changePassword, newUserSchema, PASSWORD_RULE, settingsSchema, updateOrganization } from "@/server/users/service";
 
 export type SettingsState = { error?: string; message?: string };
 
 export async function saveStudioAction(_: SettingsState, formData: FormData): Promise<SettingsState> {
-  const user = await requireUser(SETTINGS_ROLES);
+  const user = await requireUser(OWNER_ONLY_ROLES);
   const parsed = settingsSchema.safeParse({ name: formData.get("name"), recordsEmail: formData.get("recordsEmail") ?? "" });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   await updateOrganization(user.organizationId, parsed.data);
@@ -19,7 +19,7 @@ export async function saveStudioAction(_: SettingsState, formData: FormData): Pr
 }
 
 export async function addUserAction(_: SettingsState, formData: FormData): Promise<SettingsState> {
-  const user = await requireUser(SETTINGS_ROLES);
+  const user = await requireUser(OWNER_ONLY_ROLES);
   const parsed = newUserSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   try {
@@ -32,7 +32,7 @@ export async function addUserAction(_: SettingsState, formData: FormData): Promi
 }
 
 export async function changePasswordAction(_: SettingsState, formData: FormData): Promise<SettingsState> {
-  const user = await requireUser(SETTINGS_ROLES);
+  const user = await requireUser(OWNER_ONLY_ROLES);
   const next = PASSWORD_RULE.safeParse(formData.get("newPassword"));
   if (!next.success) return { error: next.error.issues[0].message };
   try {

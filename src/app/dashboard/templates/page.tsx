@@ -1,14 +1,14 @@
-// Consent Templates page: each template with its versions. Versions are never edited; changing the wording adds a new version.
+// Consent Templates page: each template with its versions. Versions are never edited; changing the wording adds a new version. Studio owner only.
 
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { formatDate } from "@/lib/format";
-import { requireUser } from "@/server/auth/session";
+import { requireOwner } from "@/server/auth/session";
 import { env } from "@/server/env";
 import { listTemplatesWithVersions } from "@/server/templates/queries";
 
 export default async function TemplatesPage() {
-  const user = await requireUser();
+  const user = await requireOwner();
   const templates = await listTemplatesWithVersions(user.organizationId);
   return (
     <div className="space-y-6">
