@@ -39,6 +39,8 @@ export default async function DocumentPage({ params }: { params: Promise<{ id: s
   const tz = env().STUDIO_TIMEZONE;
   const { document, client } = detail;
   const answers = document.formData ? (JSON.parse(document.formData) as ConsentAnswers) : null;
+  // Forms signed before the single "emergency contact number" field also stored the contact's name.
+  const legacyEmergencyName = (answers?.client as { emergencyContact?: string } | undefined)?.emergencyContact;
   const canManage = user.role === "OWNER" || user.role === "ADMIN";
   const canVoid = canManage && (document.status === "SIGNED" || SIGNABLE_STATUSES.includes(document.status) || document.status === "DRAFT");
   const failedEmails = detail.emails.filter((e) => e.status === "FAILED").length;
@@ -108,8 +110,9 @@ export default async function DocumentPage({ params }: { params: Promise<{ id: s
             <Field label="Phone">{answers.client.phone}</Field>
             <Field label="Email">{answers.client.email}</Field>
             <Field label="Mailing address">{answers.client.mailingAddress}</Field>
-            <Field label="Emergency contact">
-              {answers.client.emergencyContact} · {answers.client.emergencyPhone}
+            <Field label="Emergency contact number">
+              {legacyEmergencyName ? `${legacyEmergencyName} · ` : ""}
+              {answers.client.emergencyPhone}
             </Field>
             <Field label="Date of service">{answers.client.dateOfService}</Field>
             <Field label="Treatments">{answers.treatments.join(", ")}</Field>

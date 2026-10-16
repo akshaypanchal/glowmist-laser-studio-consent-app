@@ -212,8 +212,7 @@ export async function generateSignedPdf(input: SignedPdfInput): Promise<Uint8Arr
   w.fieldRow(["Full name", c.fullName], ["Date of birth", formatDate(c.dateOfBirth)]);
   w.fieldRow(["Email", c.email], ["Phone number", c.phone]);
   w.fieldRow(["Mailing address", c.mailingAddress]);
-  w.fieldRow(["Emergency contact", c.emergencyContact], ["Emergency phone", c.emergencyPhone]);
-  w.fieldRow(["Date of service", formatDate(c.dateOfService)]);
+  w.fieldRow(["Emergency contact number", c.emergencyPhone], ["Date of service", formatDate(c.dateOfService)]);
 
   w.heading("Treatment(s) requested");
   w.checkboxGrid(
