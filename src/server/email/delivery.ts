@@ -1,7 +1,7 @@
-// Sends the app's emails and records every attempt in email_events and the audit trail. Email is a convenience copy: a failed email never undoes a signature, and failed signed-copy emails are retried later.
+// Sends the app's emails and records every attempt in email_events and the audit trail. The signed PDF goes only to the studio's records inbox, never to the client. Email is a convenience copy: a failed email never undoes a signature, and failed signed-copy emails are retried later.
 
 import "server-only";
-import { and, eq, inArray, lt } from "drizzle-orm";
+import { and, eq, lt } from "drizzle-orm";
 import { recordEvent } from "@/server/audit/service";
 import { db } from "@/server/db";
 import {
@@ -17,7 +17,7 @@ import { env } from "@/server/env";
 import { storage } from "@/server/storage";
 import { parseTemplateContent } from "@/server/templates/service";
 import { emailService, type OutgoingEmail } from "./index";
-import { signedCopyClientEmail, signedCopyOrganizationEmail, signingInvitationEmail } from "./templates";
+import { signedCopyOrganizationEmail, signingInvitationEmail } from "./templates";
 
 type EmailType = (typeof EMAIL_TYPES)[number];
 
@@ -129,29 +129,21 @@ async function loadSignedDocument(documentId: string) {
 
 type SignedRow = Awaited<ReturnType<typeof loadSignedDocument>>;
 
-function signedCopyEmail(row: SignedRow, type: "SIGNED_COPY_CLIENT" | "SIGNED_COPY_ORGANIZATION", pdf: Uint8Array, to: string): OutgoingEmail {
+function signedCopyEmail(row: SignedRow, pdf: Uint8Array, to: string): OutgoingEmail {
   const signedAt = row.document.completedAt!;
   const answers = row.document.formData ? (JSON.parse(row.document.formData) as { client?: { fullName?: string } }) : {};
   const clientName = answers.client?.fullName || `${row.client.firstName} ${row.client.lastName}`;
   const attachments = [{ filename: `signed-consent-${row.document.reference}.pdf`, content: pdf, contentType: "application/pdf" }];
   const content = parseTemplateContent(row.version.content);
 
-  const message =
-    type === "SIGNED_COPY_CLIENT"
-      ? signedCopyClientEmail({
-          studioName: content.studio.name,
-          firstName: row.client.firstName,
-          reference: row.document.reference,
-          signedOn: formatInStudioTime(signedAt, false),
-        })
-      : signedCopyOrganizationEmail({
-          studioName: content.studio.name,
-          clientName,
-          templateLabel: `${row.templateName} v${row.version.version}`,
-          reference: row.document.reference,
-          signedAt: `${formatInStudioTime(signedAt, true)} (${signedAt.toISOString().replace("T", " ").slice(0, 16)} UTC)`,
-          documentHash: row.document.signedDocumentHash!,
-        });
+  const message = signedCopyOrganizationEmail({
+    studioName: content.studio.name,
+    clientName,
+    templateLabel: `${row.templateName} v${row.version.version}`,
+    reference: row.document.reference,
+    signedAt: `${formatInStudioTime(signedAt, true)} (${signedAt.toISOString().replace("T", " ").slice(0, 16)} UTC)`,
+    documentHash: row.document.signedDocumentHash!,
+  });
   return { to, ...message, attachments };
 }
 
@@ -160,32 +152,32 @@ function recordsEmailFor(row: SignedRow) {
 }
 
 /**
- * Emails the signed PDF to the client and the studio. Never throws: a failure
- * is recorded as FAILED and retried later by retryFailedEmails().
+ * Emails the signed PDF to the studio's records inbox (the address set in
+ * Settings, or STUDIO_RECORDS_EMAIL). The client is not emailed. Returns true
+ * when sent, false when it failed (retried later by retryFailedEmails()), and
+ * null when no records inbox is configured. Never throws.
  */
-export async function sendSignedCopies(documentId: string) {
+export async function sendSignedCopy(documentId: string): Promise<boolean | null> {
   try {
     const row = await loadSignedDocument(documentId);
-    const pdf = await storage().download(row.document.signedFileKey!);
-    const results = { client: await deliver(row.document, "SIGNED_COPY_CLIENT", signedCopyEmail(row, "SIGNED_COPY_CLIENT", pdf, row.client.email)) } as {
-      client: boolean;
-      organization: boolean | null;
-    };
     const recordsEmail = recordsEmailFor(row);
-    results.organization = recordsEmail
-      ? await deliver(row.document, "SIGNED_COPY_ORGANIZATION", signedCopyEmail(row, "SIGNED_COPY_ORGANIZATION", pdf, recordsEmail))
-      : null;
-    if (!recordsEmail) console.warn(`No records email configured for organization ${row.organization.id}`);
-    return results;
+    if (!recordsEmail) {
+      console.warn(`No records email configured for organization ${row.organization.id}; signed copy of ${documentId} not emailed`);
+      return null;
+    }
+    const pdf = await storage().download(row.document.signedFileKey!);
+    return await deliver(row.document, "SIGNED_COPY_ORGANIZATION", signedCopyEmail(row, pdf, recordsEmail));
   } catch (error) {
-    console.error(`Sending signed copies for ${documentId} failed: ${shortError(error)}`);
-    return { client: false, organization: false };
+    console.error(`Sending signed copy for ${documentId} failed: ${shortError(error)}`);
+    return false;
   }
 }
 
 /**
- * Retries failed signed-copy emails, oldest first, up to MAX_EMAIL_ATTEMPTS
- * each. Called daily by the cron route and from the dashboard.
+ * Retries failed studio signed-copy emails, oldest first, up to
+ * MAX_EMAIL_ATTEMPTS each. Old failed client copies (SIGNED_COPY_CLIENT, from
+ * before clients stopped being emailed) are left alone so they are never sent.
+ * Called daily by the cron route and from the dashboard.
  */
 export async function retryFailedEmails(options: { documentId?: string; limit?: number } = {}) {
   const failed = await db()
@@ -194,7 +186,7 @@ export async function retryFailedEmails(options: { documentId?: string; limit?: 
     .where(
       and(
         eq(emailEvents.status, "FAILED"),
-        inArray(emailEvents.type, ["SIGNED_COPY_CLIENT", "SIGNED_COPY_ORGANIZATION"]),
+        eq(emailEvents.type, "SIGNED_COPY_ORGANIZATION"),
         lt(emailEvents.attempts, MAX_EMAIL_ATTEMPTS),
         options.documentId ? eq(emailEvents.documentId, options.documentId) : undefined,
       ),
@@ -207,10 +199,9 @@ export async function retryFailedEmails(options: { documentId?: string; limit?: 
     try {
       const row = await loadSignedDocument(event.documentId);
       const pdf = await storage().download(row.document.signedFileKey!);
-      const type = event.type as "SIGNED_COPY_CLIENT" | "SIGNED_COPY_ORGANIZATION";
       // Send to the current address in case it was corrected since the failure.
-      const to = type === "SIGNED_COPY_CLIENT" ? row.client.email : (recordsEmailFor(row) ?? event.recipient);
-      if (await deliver(row.document, type, signedCopyEmail(row, type, pdf, to), event.id)) sent++;
+      const to = recordsEmailFor(row) ?? event.recipient;
+      if (await deliver(row.document, "SIGNED_COPY_ORGANIZATION", signedCopyEmail(row, pdf, to), event.id)) sent++;
     } catch (error) {
       console.error(`Retrying email ${event.id} failed: ${shortError(error)}`);
     }

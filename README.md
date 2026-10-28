@@ -53,7 +53,7 @@ See [`.env.example`](.env.example) for the full list. The ones that matter in pr
 2. Create an API key and set `EMAIL_DRIVER=resend`, `RESEND_API_KEY`, and `EMAIL_FROM` (an address on the verified domain).
 3. Set `STUDIO_RECORDS_EMAIL` to the inbox that should get the studio's copy of every signed form.
 
-When a form is signed, the client and the studio each get the signed PDF. If Resend is down, the form still counts as signed; the failure is recorded and retried by a daily Vercel Cron job (`vercel.json`, needs `CRON_SECRET`), up to five attempts.
+When a form is signed, the signed PDF is emailed only to the studio's records inbox (the client is not emailed). The subject is `Signed Consent: <client name>, Document <document ID>`, so a form can be found by searching the inbox for either. The inbox set under **Settings → Records email** wins; `STUDIO_RECORDS_EMAIL` is the fallback, and if neither is set no copy is emailed (the PDF is still stored and downloadable from the dashboard). If Resend is down, the form still counts as signed; the failure is recorded and retried by a daily Vercel Cron job (`vercel.json`, needs `CRON_SECRET`), up to five attempts.
 
 ## Analytics (Vercel Web Analytics)
 

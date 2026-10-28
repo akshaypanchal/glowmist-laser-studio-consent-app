@@ -1,4 +1,4 @@
-// The wording of each email the app sends: the signing invitation, the client's signed copy and the studio's records copy. Each has an HTML and a plain-text version.
+// The wording of each email the app sends: the signing invitation and the studio's records copy of each signed form. Each has an HTML and a plain-text version.
 
 import "server-only";
 
@@ -49,28 +49,6 @@ ${input.studioName}`;
   return { subject, html, text };
 }
 
-export function signedCopyClientEmail(input: { studioName: string; firstName: string; reference: string; signedOn: string }) {
-  const subject = "Your Signed Consent Form";
-  const html = layout(
-    input.studioName,
-    p(`Hello ${escape(input.firstName)},`) +
-      p("Thank you for completing the consent form. Attached is a copy of the signed document for your records.") +
-      rows([
-        ["Document ID", input.reference],
-        ["Signed", input.signedOn],
-      ]),
-  );
-  const text = `Hello ${input.firstName},
-
-Thank you for completing the consent form. Attached is a copy of the signed document for your records.
-
-Document ID: ${input.reference}
-Signed: ${input.signedOn}
-
-${input.studioName}`;
-  return { subject, html, text };
-}
-
 export function signedCopyOrganizationEmail(input: {
   studioName: string;
   clientName: string;
@@ -79,7 +57,8 @@ export function signedCopyOrganizationEmail(input: {
   signedAt: string;
   documentHash: string;
 }) {
-  const subject = `Signed Consent: ${input.clientName}, ${input.reference}`;
+  // Client name and document number go in the subject so the studio can find a form by searching its inbox.
+  const subject = `Signed Consent: ${input.clientName}, Document ${input.reference}`;
   const details: [string, string][] = [
     ["Client", input.clientName],
     ["Document", input.templateLabel],
@@ -92,6 +71,6 @@ export function signedCopyOrganizationEmail(input: {
 
 ${details.map(([k, v]) => `${k}: ${v}`).join("\n")}
 
-Attached: signed-consent.pdf`;
+Attached: signed-consent-${input.reference}.pdf`;
   return { subject, html, text };
 }
