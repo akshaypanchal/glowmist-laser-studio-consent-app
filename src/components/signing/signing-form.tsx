@@ -166,8 +166,8 @@ export function SigningForm({ token, reference, content, client, returnHref }: P
       <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-6 text-center" role="status">
         <h3 className="mb-2 text-xl font-semibold text-emerald-900">Thank you, your consent form is signed.</h3>
         <p className="text-emerald-900">
-          Your document ID is <span className="font-mono">{done.reference}</span>. A copy will be emailed to{" "}
-          {details.email}.
+          Your document ID is <span className="font-mono">{done.reference}</span>. The studio keeps the signed copy for its
+          records.
         </p>
         <p className="mt-4 font-medium text-emerald-900">Please hand the device back to the studio.</p>
         <a href={returnHref} className="mt-6 inline-block text-sm text-stone-600 underline">

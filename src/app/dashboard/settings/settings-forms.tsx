@@ -24,7 +24,7 @@ export function StudioForm({ name, recordsEmail, fallbackEmail }: { name: string
       <div>
         <Label htmlFor="recordsEmail">Records email</Label>
         <Input id="recordsEmail" name="recordsEmail" type="email" defaultValue={recordsEmail} placeholder={fallbackEmail} />
-        <p className="mt-1 text-xs text-stone-500">Every signed consent PDF is emailed here.</p>
+        <p className="mt-1 text-xs text-stone-500">Every signed consent PDF is emailed here (clients are not emailed a copy). The subject has the client name and document ID.</p>
       </div>
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={pending}>
